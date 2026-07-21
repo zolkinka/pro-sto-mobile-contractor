@@ -1,8 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, SharedValue } from 'react-native-reanimated';
-import { useSliderGesture } from './use-slider-gesture';
+import React, { useRef } from 'react';
+import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import Animated, { SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useTooltipPosition } from './use-tooltip-position';
 
 interface SliderThumbProps {
@@ -36,17 +34,40 @@ export const SliderThumb: React.FC<SliderThumbProps> = ({
   onChange,
 }) => {
   const tooltipWidth = useSharedValue(0);
+  const startPercentage = useRef(0);
 
-  // Создаем жест для перемещения
-  const gesture = useSliderGesture({
-    percentage,
-    isActive,
-    sliderWidth,
-    maxPercentage,
-    minPercentage,
-    onUpdate,
-    onChange,
-  });
+  // Создаем PanResponder для обработки касаний
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => false,
+      
+      onPanResponderGrant: () => {
+        isActive.value = true;
+        startPercentage.current = percentage.value;
+      },
+      
+      onPanResponderMove: (_, gestureState) => {
+        let newPercentage = startPercentage.current + (gestureState.dx / sliderWidth) * 100;
+        
+        const minLimit = minPercentage ?? 0;
+        const maxLimit = maxPercentage ?? 100;
+        
+        newPercentage = Math.max(minLimit, Math.min(maxLimit, newPercentage));
+        
+        percentage.value = newPercentage;
+        onUpdate(newPercentage);
+      },
+      
+      onPanResponderRelease: () => {
+        isActive.value = false;
+        onChange(percentage.value);
+      },
+    })
+  ).current;
 
   // Стиль для позиционирования контейнера
   const thumbContainerStyle = useAnimatedStyle(() => {
@@ -72,21 +93,28 @@ export const SliderThumb: React.FC<SliderThumbProps> = ({
   };
 
   return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View style={[styles.thumbContainer, thumbContainerStyle]}>
-        <Animated.View
-          style={[styles.tooltip, tooltipStyle]}
-          onLayout={(event) => {
-            tooltipWidth.value = event.nativeEvent.layout.width;
-          }}
-        >
-          <Text style={styles.tooltipText}>
-            {formatDisplayValue(displayValue)}
-          </Text>
-        </Animated.View>
-        <View style={styles.thumb} />
+    <Animated.View 
+      style={[styles.thumbContainer, thumbContainerStyle]}
+      collapsable={false}
+      {...panResponder.panHandlers}
+    >
+      <Animated.View
+        style={[styles.tooltip, tooltipStyle]}
+        onLayout={(event) => {
+          tooltipWidth.value = event.nativeEvent.layout.width;
+        }}
+      >
+        <Text style={styles.tooltipText}>
+          {formatDisplayValue(displayValue)}
+        </Text>
       </Animated.View>
-    </GestureDetector>
+      <View 
+        style={styles.touchableWrapper}
+        collapsable={false}
+      >
+        <View style={styles.thumb} />
+      </View>
+    </Animated.View>
   );
 };
 
@@ -96,6 +124,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     bottom: 0,
+    // Увеличиваем область захвата на Android
+    ...Platform.select({
+      android: {
+        paddingVertical: 30,
+        paddingHorizontal: 30,
+        marginVertical: -30,
+        marginHorizontal: -30,
+      },
+      ios: {
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+        marginVertical: -15,
+        marginHorizontal: -15,
+      },
+    }),
+  },
+  touchableWrapper: {
+    // Дополнительная обертка для thumb
+    padding: 0,
   },
   tooltip: {
     backgroundColor: '#302F2D',

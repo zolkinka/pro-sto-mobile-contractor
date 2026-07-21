@@ -13,10 +13,13 @@ import {
   AppRadio,
   AppSlider,
   AppSwitch,
+  AppToast,
   Collapsible,
   ColorPicker,
   LoadingDots,
-} from '@/components/ui';
+  OnboardingIndicators,
+  Skeleton,
+} from '@/components';
 import { theme } from '@/constants/theme';
 
 export function UiShowcaseScreen() {
@@ -27,6 +30,8 @@ export function UiShowcaseScreen() {
   const [sliderValue, setSliderValue] = useState(1500);
   const [selectedColor, setSelectedColor] = useState<string | null>('red');
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -113,6 +118,35 @@ export function UiShowcaseScreen() {
           <ColorPicker selectedColor={selectedColor} onColorSelect={setSelectedColor} />
         </Section>
 
+        <Section title="Skeleton">
+          <Skeleton width="100%" height={16} />
+          <View style={styles.gap} />
+          <Skeleton width="70%" height={16} />
+          <View style={styles.gap} />
+          <Skeleton width="100%" height={80} borderRadius={16} />
+        </Section>
+
+        <Section title="Toast">
+          <AppButton label="Показать toast" onPress={() => setToastVisible(true)} />
+        </Section>
+
+        <Section title="Onboarding">
+          <OnboardingIndicators total={4} current={onboardingStep} />
+          <View style={styles.row}>
+            <AppButton
+              label="Назад"
+              size="small"
+              variant="secondary"
+              onPress={() => setOnboardingStep((step) => Math.max(0, step - 1))}
+            />
+            <AppButton
+              label="Далее"
+              size="small"
+              onPress={() => setOnboardingStep((step) => Math.min(3, step + 1))}
+            />
+          </View>
+        </Section>
+
         <Section title="Loading">
           <LoadingDots />
         </Section>
@@ -144,6 +178,12 @@ export function UiShowcaseScreen() {
           Bottom sheet из клиентского приложения. Подходит для форм и деталей заказа.
         </ThemedText>
       </AppDrawer>
+
+      <AppToast
+        visible={toastVisible}
+        message="Изменения сохранены"
+        onHide={() => setToastVisible(false)}
+      />
     </SafeAreaView>
   );
 }

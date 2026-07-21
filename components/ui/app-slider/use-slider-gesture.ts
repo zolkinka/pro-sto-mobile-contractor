@@ -14,39 +14,54 @@ interface UseSliderGestureParams {
 /**
  * Хук для создания жеста перемещения ползунка
  */
-export const useSliderGesture = ({
-  percentage,
-  isActive,
-  sliderWidth,
-  maxPercentage = 100,
-  minPercentage = 0,
-  onUpdate,
-  onChange,
-}: UseSliderGestureParams) => {
-  const startX = useSharedValue(0);
+export const useSliderGesture = (params: UseSliderGestureParams) => {
+  const {
+    percentage,
+    isActive,
+    sliderWidth,
+    maxPercentage,
+    minPercentage,
+    onUpdate,
+    onChange,
+  } = params;
 
-  return Gesture.Pan()
-    .onBegin(() => {
+  const startPercentage = useSharedValue(0);
+
+  // Единый Pan gesture с максимально агрессивной активацией для Android
+  const panGesture = Gesture.Pan()
+    // Убираем activeOffset - активируемся немедленно
+    .failOffsetY([-30, 30])
+    // Большой hitSlop
+    .hitSlop({
+      top: 30,
+      bottom: 30,
+      left: 30,
+      right: 30,
+    })
+    .minDistance(0)
+    .shouldCancelWhenOutside(false)
+    .manualActivation(false)
+    .onStart(() => {
       isActive.value = true;
-      startX.value = percentage.value;
+      startPercentage.value = percentage.value;
     })
     .onUpdate((event) => {
-      if (sliderWidth === 0) return;
+      let newPercentage = startPercentage.value + (event.translationX / sliderWidth) * 100;
+
+      // Ограничиваем значение в диапазоне [0, 100] или в диапазоне с учётом min/max для range mode
+      const minLimit = minPercentage ?? 0;
+      const maxLimit = maxPercentage ?? 100;
       
-      const deltaPercentage = (event.translationX / sliderWidth) * 100;
-      const newPercentage = Math.max(
-        minPercentage,
-        Math.min(maxPercentage, startX.value + deltaPercentage)
-      );
-      
+      newPercentage = Math.max(minLimit, Math.min(maxLimit, newPercentage));
+
       percentage.value = newPercentage;
       runOnJS(onUpdate)(newPercentage);
     })
     .onEnd(() => {
       isActive.value = false;
       runOnJS(onChange)(percentage.value);
-    })
-    .onFinalize(() => {
-      isActive.value = false;
     });
+
+  // Используем Exclusive чтобы блокировать другие жесты (например, скролл)
+  return Gesture.Exclusive(panGesture);
 };

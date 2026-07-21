@@ -1,16 +1,21 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './icon';
 
-// Доступные цвета для автомобиля
+// Доступные цвета для автомобиля (упорядочены логично: ахроматические + хроматические по радуге)
 const COLORS = [
-  { id: 'red', hex: '#CA3C3C', name: 'Красный' },
-  { id: 'purple', hex: '#D046C7', name: 'Фиолетовый' },
-  { id: 'green', hex: '#78C026', name: 'Зеленый' },
-  { id: 'yellow', hex: '#F2B91C', name: 'Желтый' },
-  { id: 'blue', hex: '#517EF1', name: 'Синий' },
-  { id: 'gray', hex: '#A39F9F', name: 'Серый' },
-  { id: 'black', hex: '#3C3434', name: 'Черный' },
+  { id: 'white', hex: '#FFFFFF', name: 'Белый' },
+  { id: 'gray-light', hex: '#DCDCDC', name: 'Светло-серый' },
+  { id: 'gray', hex: '#9C9999', name: 'Серый' },
+  { id: 'black', hex: '#000000', name: 'Черный' },
+  { id: 'red', hex: '#FC4829', name: 'Красный' },
+  { id: 'orange', hex: '#FF8C00', name: 'Оранжевый' },
+  { id: 'yellow', hex: '#FFD700', name: 'Жёлтый' },
+  { id: 'green', hex: '#228B22', name: 'Зеленый' },
+  { id: 'cyan', hex: '#00BFFF', name: 'Голубой' },
+  { id: 'blue', hex: '#0066FF', name: 'Синий' },
+  { id: 'purple', hex: '#8B00FF', name: 'Фиолетовый' },
+  { id: 'brown', hex: '#926547', name: 'Коричневый' },
 ];
 
 interface ColorPickerProps {
@@ -20,7 +25,7 @@ interface ColorPickerProps {
 
 /**
  * Компонент выбора цвета автомобиля
- * Показывает 7 цветов, отмечает выбранный галочкой
+ * Показывает 8 цветов, отмечает выбранный галочкой
  */
 export const ColorPicker: React.FC<ColorPickerProps> = ({
   selectedColor,
@@ -29,23 +34,32 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Выберите цвет</Text>
-      <View style={styles.colorsContainer}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.colorsContainer}
+      >
         {COLORS.map((color) => {
           const isSelected = selectedColor === color.id;
+          const isWhite = color.id === 'white';
           return (
             <Pressable
               key={color.id}
-              style={[styles.colorButton, { backgroundColor: color.hex }]}
+              style={[
+                styles.colorButton, 
+                { backgroundColor: color.hex },
+                isWhite && styles.whiteBorder
+              ]}
               onPress={() => onColorSelect(color.id)}
               accessibilityLabel={`Выбрать ${color.name} цвет`}
             >
               {isSelected && (
-                <Icon name="check" size={18} color="#FFFFFF" />
+                <Icon name="check" size={18} color={isWhite ? "#808080" : "#FFFFFF"} />
               )}
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -63,7 +77,6 @@ const styles = StyleSheet.create({
   colorsContainer: {
     flexDirection: 'row',
     gap: 12,
-    flexWrap: 'wrap',
   },
   colorButton: {
     width: 30,
@@ -71,5 +84,9 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  whiteBorder: {
+    borderWidth: 1,
+    borderColor: '#F4F3F0',
   },
 });

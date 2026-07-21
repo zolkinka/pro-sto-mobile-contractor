@@ -1,24 +1,31 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
-  View,
+  Dimensions,
   Modal,
+  PanResponder,
+  type PanResponderGestureState,
+  Platform,
   Pressable,
   StyleSheet,
-  Dimensions,
-  ScrollView,
   Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon } from './icon';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.92; // 92% от высоты экрана
+const SWIPE_CLOSE_DISTANCE = 100;
+const SWIPE_CLOSE_VELOCITY = 500;
 
 export interface AppDrawerProps {
   visible: boolean;
@@ -26,6 +33,9 @@ export interface AppDrawerProps {
   title?: string;
   children: ReactNode;
   footer?: ReactNode; // Добавляем опциональный футер
+  backgroundColor?: string;
+  headerVariant?: 'close' | 'handle';
+  size?: 'full' | 'auto';
 }
 
 export const AppDrawer: React.FC<AppDrawerProps> = ({
@@ -34,7 +44,19 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   title,
   children,
   footer,
+  backgroundColor = '#F9F8F5',
+  headerVariant = 'close',
+  size = 'full',
 }) => {
+  const insets = useSafeAreaInsets();
+  const isAutoSize = size === 'auto';
+  // Some Android devices (e.g. MIUI) under-report bottom inset with edge-to-edge.
+  const footerBottomPadding = Math.max(insets.bottom + 16, 48);
+  const scrollBottomPadding = isAutoSize
+    ? footer
+      ? 8
+      : footerBottomPadding
+    : 100 + footerBottomPadding;
   const translateY = useSharedValue(DRAWER_HEIGHT); // Начинаем с высоты drawer
   const backdropOpacity = useSharedValue(0);
 
@@ -48,27 +70,70 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
     }
   }, [visible, translateY, backdropOpacity]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     translateY.value = withTiming(DRAWER_HEIGHT, { duration: 250 }, () => {
       runOnJS(onClose)();
     });
     backdropOpacity.value = withTiming(0, { duration: 250 });
-  };
+  }, [backdropOpacity, onClose, translateY]);
 
-  // Gesture для свайпа вниз
-  const gesture = Gesture.Pan()
+  const handleDragRelease = useCallback(
+    (gestureState: PanResponderGestureState) => {
+      const shouldClose =
+        gestureState.dy > SWIPE_CLOSE_DISTANCE ||
+        gestureState.vy > SWIPE_CLOSE_VELOCITY;
+
+      if (shouldClose) {
+        handleClose();
+        return;
+      }
+
+      translateY.value = withSpring(0);
+    },
+    [handleClose, translateY],
+  );
+
+  const handlePanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponder: (
+          _,
+          gestureState: PanResponderGestureState,
+        ) =>
+          Math.abs(gestureState.dy) > 2 &&
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderMove: (_, gestureState: PanResponderGestureState) => {
+          if (gestureState.dy > 0) {
+            translateY.value = gestureState.dy;
+          }
+        },
+        onPanResponderRelease: (_, gestureState: PanResponderGestureState) => {
+          handleDragRelease(gestureState);
+        },
+        onPanResponderTerminate: () => {
+          translateY.value = withSpring(0);
+        },
+      }),
+    [handleDragRelease, translateY],
+  );
+
+  // Gesture для свайпа вниз от handle — не зависит от позиции ScrollView
+  const handleGesture = Gesture.Pan()
     .onUpdate((event) => {
       if (event.translationY > 0) {
         translateY.value = event.translationY;
       }
     })
     .onEnd((event) => {
-      if (event.translationY > 100 || event.velocityY > 500) {
+      if (event.translationY > SWIPE_CLOSE_DISTANCE || event.velocityY > SWIPE_CLOSE_VELOCITY) {
         runOnJS(handleClose)();
       } else {
         translateY.value = withSpring(0);
       }
-    });
+    })
+    .simultaneousWithExternalGesture();
 
   const drawerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -93,34 +158,82 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         </Pressable>
 
         {/* Drawer */}
-        <GestureDetector gesture={gesture}>
-          <Animated.View style={[styles.drawer, drawerStyle]}>
-            {/* Header */}
-            <View style={styles.header}>
-              {/* Handle bar - полоска для свайпа */}
-              <View style={styles.handleBar} />
-              {title && (
-                <Text style={styles.title}>{title}</Text>
-              )}
-            </View>
-
-            {/* Content */}
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollViewContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {children}
-            </ScrollView>
-
-            {/* Footer (фиксированный внизу) */}
-            {footer && (
-              <View style={styles.footer}>
-                {footer}
+        <Animated.View
+          style={[
+            styles.drawer,
+            isAutoSize && styles.drawerAuto,
+            { backgroundColor },
+            drawerStyle,
+          ]}
+        >
+          {/* Header with gesture - свайп от handle всегда работает */}
+          {headerVariant === 'handle' ? (
+            Platform.OS === 'ios' ? (
+              <GestureDetector gesture={handleGesture}>
+                <Animated.View
+                  style={[
+                    styles.handleHeader,
+                    { backgroundColor },
+                  ]}
+                  collapsable={false}
+                >
+                  <View style={styles.dragHandle} />
+                </Animated.View>
+              </GestureDetector>
+            ) : (
+              <View
+                style={[
+                  styles.handleHeader,
+                  styles.handleHeaderAndroid,
+                  { backgroundColor },
+                ]}
+                collapsable={false}
+                {...handlePanResponder.panHandlers}
+              >
+                <View style={styles.dragHandle} />
               </View>
-            )}
-          </Animated.View>
-        </GestureDetector>
+            )
+          ) : (
+            <View style={[styles.header, { backgroundColor }]}>
+              {title && <Text style={styles.title}>{title}</Text>}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleClose}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="close" size={24} color="#302F2D" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Content с отслеживанием скролла */}
+          <Animated.ScrollView
+            style={isAutoSize ? styles.scrollViewAuto : styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollViewContent,
+              headerVariant === 'handle' && styles.scrollViewContentWithHandle,
+              isAutoSize && styles.scrollViewContentAuto,
+              { paddingBottom: scrollBottomPadding },
+            ]}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            bounces={!isAutoSize}
+          >
+            {children}
+          </Animated.ScrollView>
+
+          {footer && (
+            <View
+              style={[
+                styles.footer,
+                isAutoSize && styles.footerAuto,
+                { paddingBottom: footerBottomPadding },
+              ]}
+            >
+              {footer}
+            </View>
+          )}
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -140,48 +253,86 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: DRAWER_HEIGHT,
-    backgroundColor: '#F9F8F5',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     shadowColor: '#000000',
-    shadowOffset: { width: 8, height: -13 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.03,
     shadowRadius: 15,
     elevation: 10,
   },
+  drawerAuto: {
+    height: undefined,
+    maxHeight: DRAWER_HEIGHT,
+  },
   header: {
-    paddingTop: 12,
-    paddingBottom: 4,
+    paddingTop: 14,
+    paddingBottom: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F8F5',
+    justifyContent: 'center',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
   },
-  handleBar: {
+  handleHeader: {
+    width: '100%',
+    paddingTop: 20,
+    paddingBottom: 12,
+    alignItems: 'center',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+  },
+  handleHeaderAndroid: {
+    paddingTop: 24,
+    paddingBottom: 12,
+  },
+  dragHandle: {
     width: 39,
     height: 5,
     backgroundColor: '#E7E7E7',
     borderRadius: 5,
+    alignSelf: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 16,
+    top: 14,
+    padding: 0,
   },
   title: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    lineHeight: 19.2,
+    lineHeight: 21.6,
     color: '#302F2D',
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewAuto: {
+    flexGrow: 0,
+    flexShrink: 1,
   },
   scrollViewContent: {
     padding: 16,
     gap: 12,
     paddingBottom: 100, // Для кнопки внизу
   },
+  scrollViewContentWithHandle: {
+    paddingTop: 8,
+  },
+  scrollViewContentAuto: {
+    flexGrow: 0,
+  },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#F9F8F5',
+    backgroundColor: 'transparent',
+  },
+  footerAuto: {
+    position: 'relative',
+    paddingTop: 8,
   },
 });

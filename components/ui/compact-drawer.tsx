@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect } from 'react';
 import {
   Dimensions,
+  KeyboardAvoidingView,
   Modal,
   Pressable,
   StyleSheet,
@@ -45,16 +46,16 @@ export const CompactDrawer: React.FC<CompactDrawerProps> = ({
       });
       backdropOpacity.value = withTiming(1, { duration: 250 });
     } else {
-      translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 });
-      backdropOpacity.value = withTiming(0, { duration: 250 });
+      // Мгновенное закрытие без анимации
+      translateY.value = SCREEN_HEIGHT;
+      backdropOpacity.value = 0;
     }
   }, [visible, translateY, backdropOpacity]);
 
   const handleClose = () => {
-    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 }, () => {
-      runOnJS(onClose)();
-    });
-    backdropOpacity.value = withTiming(0, { duration: 250 });
+    // Мгновенное закрытие - просто вызываем onClose
+    // React Native сам скроет клавиатуру при размонтировании компонента
+    onClose();
   };
 
   // Gesture для свайпа вниз
@@ -95,30 +96,35 @@ export const CompactDrawer: React.FC<CompactDrawerProps> = ({
         </Pressable>
 
         {/* Drawer */}
-        <GestureDetector gesture={gesture}>
-          <Animated.View style={[styles.drawer, drawerStyle, { paddingBottom: insets.bottom }]}>
-            {/* Header */}
-            <View style={styles.header}>
-              {/* Handle bar */}
-              <View style={styles.handleBar} />
-              {title && (
-                <Text style={styles.title}>{title}</Text>
-              )}
-            </View>
-
-            {/* Content */}
-            <View style={styles.content}>
-              {children}
-            </View>
-
-            {/* Footer */}
-            {footer && (
-              <View style={styles.footer}>
-                {footer}
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={styles.keyboardAvoidingView}
+        >
+          <GestureDetector gesture={gesture}>
+            <Animated.View style={[styles.drawer, drawerStyle]}>
+              {/* Header */}
+              <View style={styles.header}>
+                {/* Handle bar */}
+                <View style={styles.handleBar} />
+                {title && (
+                  <Text style={styles.title}>{title}</Text>
+                )}
               </View>
-            )}
-          </Animated.View>
-        </GestureDetector>
+
+              {/* Content */}
+              <View style={[styles.content, { paddingBottom: Math.max(16 + insets.bottom, 32) }]}>
+                {children}
+              </View>
+
+              {/* Footer */}
+              {footer && (
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+                  {footer}
+                </View>
+              )}
+            </Animated.View>
+          </GestureDetector>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -132,11 +138,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(83, 81, 79, 0.2)',
   },
-  drawer: {
+  keyboardAvoidingView: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    width: '100%',
+  },
+  drawer: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
