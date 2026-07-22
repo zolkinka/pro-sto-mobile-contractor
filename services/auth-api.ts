@@ -4,7 +4,7 @@ import type {
   AdminUser,
 } from '@/types/auth';
 
-import { apiClient, setAuthAccessToken } from './api-client';
+import { apiClient } from './api-client';
 
 export function mapAdminUserToStoredUser(user: AdminUser) {
   return {
@@ -34,7 +34,6 @@ export async function loginWithAdminAuthCode(
     { phone, code },
   );
 
-  setAuthAccessToken(response.data.accessToken);
   return response.data;
 }
 
@@ -55,7 +54,6 @@ export async function refreshAdminAuthToken(refreshToken: string): Promise<{
     },
   );
 
-  setAuthAccessToken(response.data.accessToken);
   return response.data;
 }
 

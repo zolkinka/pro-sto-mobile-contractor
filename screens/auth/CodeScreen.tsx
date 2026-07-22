@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -30,6 +30,8 @@ export const CodeScreen = observer(function CodeScreen() {
   const [code, setCode] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(OTP_RESEND_SECONDS);
   const [canResend, setCanResend] = useState(false);
+  const countdownRef = useRef(OTP_RESEND_SECONDS);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const iosHiddenInputRef = useRef<TextInput | null>(null);
   const isSubmittingRef = useRef(false);
@@ -38,17 +40,45 @@ export const CodeScreen = observer(function CodeScreen() {
   const formattedPhone = authStore.phone ? formatPhone(authStore.phone) : '';
 
   useEffect(() => {
-    if (timer <= 0) {
-      setCanResend(true);
-      return;
+    if (!authStore.phone) {
+      authStore.ensurePendingPhoneRestored().catch(() => undefined);
+    }
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
 
-    const interval = setInterval(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
+    countdownRef.current = OTP_RESEND_SECONDS;
+    setTimer(OTP_RESEND_SECONDS);
+    setCanResend(false);
 
-    return () => clearInterval(interval);
-  }, [timer]);
+    intervalRef.current = setInterval(() => {
+      countdownRef.current -= 1;
+
+      if (countdownRef.current <= 0) {
+        setCanResend(true);
+        setTimer(0);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } else {
+        setTimer(countdownRef.current);
+      }
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    startCountdown();
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [startCountdown]);
 
   const handleSubmitCode = async () => {
     const fullCode = code.join('');
@@ -146,7 +176,7 @@ export const CodeScreen = observer(function CodeScreen() {
     }
 
     setCanResend(false);
-    setTimer(OTP_RESEND_SECONDS);
+    startCountdown();
     setCode(['', '', '', '']);
 
     const success = await authStore.sendCode(authStore.phone);

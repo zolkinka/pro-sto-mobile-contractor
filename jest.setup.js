@@ -1,5 +1,9 @@
 /* eslint-env jest */
 
+jest.mock('@/screens/UiShowcaseScreen', () => ({
+  UiShowcaseScreen: () => null,
+}));
+
 jest.mock('mobx-react-lite', () => ({
   observer: (component) => component,
 }));
@@ -39,17 +43,6 @@ jest.mock('@react-navigation/native-stack', () => ({
     Screen: () => null,
   }),
 }));
-
-jest.mock('@expo/vector-icons/MaterialIcons', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
-
-  return {
-    __esModule: true,
-    default: ({ name, ...props }) =>
-      React.createElement(Text, props, name ?? 'icon'),
-  };
-});
 
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 

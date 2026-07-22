@@ -1,53 +1,26 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
-import { AppText } from '@/components/ui/app-text';
-import { theme } from '@/constants/theme';
+const logoSource = require('@/assets/images/prosto-logo.png');
 
-export function ProStoLogo() {
+type ProStoLogoProps = {
+  width?: number;
+};
+
+const LOGO_ASPECT_RATIO = 188 / 49;
+
+export function ProStoLogo({ width = 140 }: ProStoLogoProps) {
+  const height = width / LOGO_ASPECT_RATIO;
+
   return (
     <View style={styles.container}>
-      <View style={styles.dotsRow}>
-        <View style={[styles.dot, styles.dotLarge]} />
-        <View style={styles.dotColumn}>
-          <View style={[styles.dot, styles.dotSmall]} />
-          <View style={[styles.dot, styles.dotSmall]} />
-        </View>
-      </View>
-      <AppText weight="semiBold" style={styles.title}>просто</AppText>
+      <Image source={logoSource} style={{ width, height }} resizeMode="contain" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  dotColumn: {
-    gap: 4,
-  },
-  dot: {
-    backgroundColor: theme.colors.gray[900],
-    borderRadius: 2,
-  },
-  dotLarge: {
-    width: 14,
-    height: 14,
-  },
-  dotSmall: {
-    width: 8,
-    height: 8,
-  },
-  title: {
-    fontSize: 28,
-    color: theme.colors.gray[900],
-    letterSpacing: -0.5,
   },
 });

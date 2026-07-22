@@ -12,7 +12,6 @@
     "postinstall": "npm run link-assets"
   },
   "dependencies": {
-    "@expo/vector-icons": "^15.1.1",
     "@miblanchard/react-native-slider": "^2.6.0",
     "@react-native/new-app-screen": "0.81.4",
     "@react-navigation/native": "^7.3.13",

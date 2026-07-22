@@ -9,6 +9,6 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(\\.pnpm/.+/node_modules/)?((jest-)?react-native|@react-native|react-native-.*|@react-navigation|@expo))',
+    'node_modules/(?!(\\.pnpm/.+/node_modules/)?((jest-)?react-native|@react-native|react-native-.*|@react-navigation))',
   ],
 };

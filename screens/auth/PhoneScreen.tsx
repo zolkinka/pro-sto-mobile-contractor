@@ -13,9 +13,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { ProStoLogo } from '@/components/auth/prosto-logo';
 import { AppButton } from '@/components/ui/app-button';
+import { Icon } from '@/components/ui/icon';
 import { AppInput } from '@/components/ui/app-input';
 import { AppText } from '@/components/ui/app-text';
 import { PRIVACY_POLICY_URL } from '@/constants/config';
@@ -29,10 +29,11 @@ type PhoneScreenNavigation = NativeStackNavigationProp<AuthStackParamList, 'Phon
 export const PhoneScreen = observer(function PhoneScreen() {
   const navigation = useNavigation<PhoneScreenNavigation>();
   const insets = useSafeAreaInsets();
-  const [phone, setPhone] = useState('+7');
+  const [phone, setPhone] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handlePhoneChange = (text: string) => {
+    authStore.clearError();
     setPhone(formatPhone(text));
   };
 
@@ -51,8 +52,6 @@ export const PhoneScreen = observer(function PhoneScreen() {
 
     if (success) {
       navigation.navigate('Code');
-    } else if (authStore.error) {
-      Alert.alert('Ошибка', authStore.error);
     }
   };
 
@@ -68,13 +67,17 @@ export const PhoneScreen = observer(function PhoneScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.mainContainer}>
           <View style={styles.logoContainer}>
-            <ProStoLogo />
+            <ProStoLogo width={150} />
           </View>
 
           <View style={styles.signInBlock}>
             <View style={styles.header}>
-              <AppText weight="medium" style={styles.title}>Добро пожаловать!</AppText>
-              <AppText style={styles.subtitle}>Введите номер телефона для входа в смену.</AppText>
+              <AppText weight="medium" style={styles.title}>
+                Добро пожаловать!
+              </AppText>
+              <AppText style={styles.subtitle}>
+                Введите номер телефона для входа в смену.
+              </AppText>
             </View>
 
             <AppInput
@@ -88,10 +91,17 @@ export const PhoneScreen = observer(function PhoneScreen() {
               editable={!authStore.isLoading}
             />
 
+            {authStore.error && <AppText style={styles.errorText}>{authStore.error}</AppText>}
+
             <View style={styles.consentBlock}>
-              <Pressable onPress={() => setAgreedToTerms((value) => !value)} hitSlop={8}>
+              <Pressable
+                onPress={() => setAgreedToTerms((value) => !value)}
+                hitSlop={8}
+                style={styles.checkboxPressable}>
                 <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-                  {agreedToTerms && <AppText weight="semiBold" style={styles.checkmark}>✓</AppText>}
+                  {agreedToTerms && (
+                    <Icon name="check" size={11} color={theme.colors.gray[50]} />
+                  )}
                 </View>
               </Pressable>
               <Pressable
@@ -117,8 +127,7 @@ export const PhoneScreen = observer(function PhoneScreen() {
         </View>
       </ScrollView>
 
-      <View
-        style={[styles.buttonContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View style={[styles.buttonContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <AppButton
           label={authStore.isLoading ? 'Отправка...' : 'Поехали'}
           onPress={handleSendCode}
@@ -159,19 +168,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 16.8,
-    color: theme.colors.gray[600],
+    fontSize: 16,
+    lineHeight: 19.2,
+    color: theme.colors.gray[900],
     textAlign: 'center',
-    maxWidth: 330,
+    maxWidth: 358,
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 19.6,
+    color: theme.colors.accent.primary,
+    textAlign: 'center',
   },
   consentBlock: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     alignSelf: 'center',
     gap: 12,
     width: '100%',
     maxWidth: 330,
+  },
+  checkboxPressable: {
+    marginTop: 1,
   },
   consentTextContainer: {
     flex: 1,
@@ -191,9 +209,9 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.colors.gray[400],
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.gray[50],
     justifyContent: 'center',
     alignItems: 'center',
@@ -202,10 +220,6 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: theme.colors.gray[900],
     borderColor: theme.colors.gray[900],
-  },
-  checkmark: {
-    color: theme.colors.gray[50],
-    fontSize: 12,
   },
   buttonContainer: {
     paddingHorizontal: 16,

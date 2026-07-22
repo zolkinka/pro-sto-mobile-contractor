@@ -43,7 +43,9 @@ export type IconName =
   | "timer"
   | "camera"
   | "paperclip"
-  | "telegram";
+  | "telegram"
+  | "send"
+  | "code";
 
 export interface IconProps {
   name: IconName;
@@ -781,6 +783,32 @@ export const Icon: React.FC<IconProps> = ({
             />
             <Path
               d="M15.5463 21.7226L11.72 25.6926C11.5817 25.8361 11.4038 25.935 11.209 25.9766C11.0141 26.0182 10.8113 26.0007 10.6265 25.9263C10.4417 25.8519 10.2833 25.724 10.1717 25.559C10.0601 25.394 10.0003 25.1994 10 25.0001V16.8589"
+              stroke={color}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </G>
+        );
+
+      case "send":
+        return (
+          <Path
+            d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        );
+
+      case "code":
+        return (
+          <G>
+            <Path
+              d="M16 18l6-6-6-6M8 6l-6 6 6 6"
               stroke={color}
               strokeWidth="2"
               strokeLinecap="round"

@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
+import { OFFLINE_GRACE_MS } from '@/constants/auth';
 import {
   getCurrentAdminUser,
   loginWithAdminAuthCode,
@@ -61,11 +62,13 @@ export class AuthStore {
 
         const sessionValid = await this.restoreSessionFromStoredTokens();
         if (!sessionValid) {
-          await this.logout();
+          await this.clearStoredSession();
         }
+      } else {
+        await this.restorePendingPhone();
       }
     } catch {
-      await this.logout();
+      await this.clearStoredSession();
     } finally {
       runInAction(() => {
         this.isInitialized = true;
@@ -73,10 +76,16 @@ export class AuthStore {
     }
   }
 
+  /**
+   * Validates stored tokens on startup.
+   * Offline grace: session kept up to 7 days after last successful server verification.
+   * Server refresh TTL is 30 days (handled by backend).
+   */
   private async restoreSessionFromStoredTokens(): Promise<boolean> {
     const validity = await this.checkTokenValidity();
 
     if (validity === 'valid') {
+      await TokenStorageService.saveLastVerifiedAt(Date.now());
       return true;
     }
 
@@ -86,11 +95,38 @@ export class AuthStore {
         return false;
       }
 
-      return (await this.checkTokenValidity()) === 'valid';
+      const recheck = await this.checkTokenValidity();
+      if (recheck === 'valid') {
+        await TokenStorageService.saveLastVerifiedAt(Date.now());
+        return true;
+      }
+
+      return false;
     }
 
-    // Network/server unavailable — keep cached session for offline use.
-    return true;
+    const lastVerifiedAt = await TokenStorageService.getLastVerifiedAt();
+    if (lastVerifiedAt && Date.now() - lastVerifiedAt < OFFLINE_GRACE_MS) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async restorePendingPhone(): Promise<void> {
+    if (this.phone) {
+      return;
+    }
+
+    const pendingPhone = await TokenStorageService.getPendingPhone();
+    if (pendingPhone) {
+      runInAction(() => {
+        this.phone = pendingPhone;
+      });
+    }
+  }
+
+  async ensurePendingPhoneRestored(): Promise<void> {
+    await this.restorePendingPhone();
   }
 
   async checkTokenValidity(): Promise<'valid' | 'unauthorized' | 'unavailable'> {
@@ -117,6 +153,7 @@ export class AuthStore {
     try {
       const normalizedPhone = toE164Phone(phone);
       await sendAdminAuthCode(normalizedPhone);
+      await TokenStorageService.savePendingPhone(normalizedPhone);
 
       runInAction(() => {
         this.phone = normalizedPhone;
@@ -155,11 +192,15 @@ export class AuthStore {
         this.error = null;
       });
 
+      setAuthAccessToken(response.accessToken);
+
       await TokenStorageService.saveAuthData(
         response.accessToken,
         response.refreshToken,
         mappedUser,
       );
+      await TokenStorageService.saveLastVerifiedAt(Date.now());
+      await TokenStorageService.clearPendingPhone();
 
       return true;
     } catch (error) {
@@ -177,7 +218,6 @@ export class AuthStore {
     }
 
     if (!this.refreshToken || !this.user) {
-      await this.logout();
       return false;
     }
 
@@ -199,6 +239,8 @@ export class AuthStore {
         this.refreshToken = response.refreshToken;
       });
 
+      setAuthAccessToken(response.accessToken);
+
       if (this.user) {
         await TokenStorageService.saveAuthData(
           response.accessToken,
@@ -207,9 +249,13 @@ export class AuthStore {
         );
       }
 
+      await TokenStorageService.saveLastVerifiedAt(Date.now());
       return true;
-    } catch {
-      await this.logout();
+    } catch (error) {
+      if (isApiUnauthorizedError(error)) {
+        await this.logout();
+      }
+
       return false;
     }
   }
@@ -225,6 +271,23 @@ export class AuthStore {
 
     setAuthAccessToken(null);
     await TokenStorageService.clearAuthData();
+    await TokenStorageService.clearLastVerifiedAt();
+    await TokenStorageService.clearPendingPhone();
+  }
+
+  /** Clears persisted session without wiping OTP phone pending verification. */
+  private async clearStoredSession(): Promise<void> {
+    runInAction(() => {
+      this.accessToken = null;
+      this.refreshToken = null;
+      this.user = null;
+      this.error = null;
+    });
+
+    setAuthAccessToken(null);
+    await TokenStorageService.clearAuthData();
+    await TokenStorageService.clearLastVerifiedAt();
+    await this.restorePendingPhone();
   }
 
   clearError(): void {

@@ -98,5 +98,7 @@ export const theme = {
       primary: '#D8182E',
       secondary: '#6982E9',
     },
+    placeholder: '#B2B1AE',
+    border: '#F4F3F0',
   },
 };

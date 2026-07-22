@@ -3,11 +3,14 @@ import { View, StyleSheet, ViewStyle, TextInputProps } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { AppTextInput } from '@/components/ui/app-text-input';
+import { theme } from '@/constants/theme';
 
 export interface AppInputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   error?: string;
   containerStyle?: ViewStyle;
+  inputContainerStyle?: ViewStyle;
+  borderless?: boolean;
   postfix?: string;
 }
 
@@ -15,6 +18,8 @@ export const AppInput: React.FC<AppInputProps> = ({
   label,
   error,
   containerStyle,
+  inputContainerStyle,
+  borderless = false,
   postfix,
   ...textInputProps
 }) => {
@@ -25,10 +30,16 @@ export const AppInput: React.FC<AppInputProps> = ({
           <AppText style={styles.label}>{label}</AppText>
         </View>
       )}
-      <View style={[styles.inputContainer, error && styles.inputContainerError]}>
+      <View
+        style={[
+          styles.inputContainer,
+          borderless && styles.inputContainerBorderless,
+          error && styles.inputContainerError,
+          inputContainerStyle,
+        ]}>
         <AppTextInput
           style={[styles.input, postfix && styles.inputWithPostfix]}
-          placeholderTextColor="#888684"
+          placeholderTextColor={theme.colors.placeholder}
           {...textInputProps}
         />
         {postfix && <AppText style={styles.postfix}>{postfix}</AppText>}
@@ -53,10 +64,10 @@ const styles = StyleSheet.create({
     color: '#53514F',
   },
   inputContainer: {
-    backgroundColor: '#F9F8F5',
+    backgroundColor: theme.colors.gray[100],
     borderWidth: 1,
-    borderColor: '#F4F3F0',
-    borderRadius: 20,
+    borderColor: theme.colors.border,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 12,
     height: 52,
@@ -64,13 +75,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  inputContainerBorderless: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.gray[100],
+  },
   inputContainerError: {
     borderColor: '#D8182E',
   },
   input: {
     fontSize: 15,
     lineHeight: 18,
-    color: '#302F2D',
+    color: theme.colors.gray[900],
     padding: 0,
     margin: 0,
     flex: 1,

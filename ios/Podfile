@@ -44,6 +44,8 @@ target 'ProStoMobileContractors' do
         File.chmod(0o644, fmt_base_h)
         File.write(fmt_base_h, patched)
         Pod::UI.puts 'Patched fmt/base.h to disable consteval on Apple Clang'.green
+      else
+        Pod::UI.warn('fmt patch: target string not found — check fmt version bump')
       end
     end
 

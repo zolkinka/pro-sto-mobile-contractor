@@ -8,10 +8,14 @@ import { theme } from '@/constants/theme';
 import { authStore } from '@/stores/auth.store';
 
 import { AuthStack } from './AuthStack';
-import { MainStack } from './MainStack';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function MainStackScreen() {
+  const { MainStack } = require('./MainStack') as typeof import('./MainStack');
+  return <MainStack />;
+}
 
 export const RootNavigator = observer(function RootNavigator() {
   if (!authStore.isInitialized) {
@@ -26,7 +30,7 @@ export const RootNavigator = observer(function RootNavigator() {
     <NavigationContainer key={authStore.isAuthenticated ? 'main' : 'auth'}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {authStore.isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainStack} />
+          <Stack.Screen name="Main" component={MainStackScreen} />
         ) : (
           <Stack.Screen name="Auth" component={AuthStack} />
         )}

@@ -1,6 +1,10 @@
 export const formatPhone = (value: string): string => {
   const numbers = value.replace(/\D/g, '');
 
+  if (numbers.length === 0) {
+    return '';
+  }
+
   let formatted = numbers;
   if (formatted.startsWith('8')) {
     formatted = '7' + formatted.slice(1);

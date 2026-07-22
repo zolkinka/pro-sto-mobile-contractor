@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { theme } from '@/constants/theme';
 
 export interface AppButtonProps {
   label: string;
@@ -32,7 +33,9 @@ export const AppButton: React.FC<AppButtonProps> = ({
       ]}
       onPress={onPress}
       disabled={disabled}>
-      <AppText style={[styles.text, styles[`${variant}Text`]]}>{label}</AppText>
+      <AppText weight="regular" style={[styles.text, styles[`${variant}Text`]]}>
+        {label}
+      </AppText>
     </Pressable>
   );
 };
@@ -49,12 +52,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primary: {
-    backgroundColor: '#302F2D',
+    backgroundColor: theme.colors.gray[900],
   },
   secondary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.gray[50],
     borderWidth: 1,
-    borderColor: '#F4F3F0',
+    borderColor: theme.colors.border,
   },
   small: {
     paddingHorizontal: 16,
@@ -82,9 +85,9 @@ const styles = StyleSheet.create({
     lineHeight: 19.2,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: theme.colors.gray[50],
   },
   secondaryText: {
-    color: '#302F2D',
+    color: theme.colors.gray[900],
   },
 });
