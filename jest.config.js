@@ -5,6 +5,7 @@ module.exports = {
   setupFilesAfterEnv: [...(reactNativePreset.setupFilesAfterEnv ?? []), '<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     ...reactNativePreset.moduleNameMapper,
+    '^@env$': '<rootDir>/__mocks__/env.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
   transformIgnorePatterns: [
