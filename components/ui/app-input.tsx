@@ -1,5 +1,8 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, ViewStyle, TextInputProps } from 'react-native';
+import { View, StyleSheet, ViewStyle, TextInputProps } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
+import { AppTextInput } from '@/components/ui/app-text-input';
 
 export interface AppInputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -19,22 +22,18 @@ export const AppInput: React.FC<AppInputProps> = ({
     <View style={[styles.container, containerStyle]}>
       {label && (
         <View style={styles.labelContainer}>
-          <Text style={styles.label}>{label}</Text>
+          <AppText style={styles.label}>{label}</AppText>
         </View>
       )}
       <View style={[styles.inputContainer, error && styles.inputContainerError]}>
-        <TextInput
+        <AppTextInput
           style={[styles.input, postfix && styles.inputWithPostfix]}
           placeholderTextColor="#888684"
           {...textInputProps}
         />
-        {postfix && (
-          <Text style={styles.postfix}>{postfix}</Text>
-        )}
+        {postfix && <AppText style={styles.postfix}>{postfix}</AppText>}
       </View>
-      {error && (
-        <Text style={styles.error}>{error}</Text>
-      )}
+      {error && <AppText style={styles.error}>{error}</AppText>}
     </View>
   );
 };
@@ -50,8 +49,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 16.8, // 14 * 1.2
+    lineHeight: 16.8,
     color: '#53514F',
   },
   inputContainer: {
@@ -71,8 +69,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 15,
-    fontWeight: '400',
-    lineHeight: 18, // 15 * 1.2
+    lineHeight: 18,
     color: '#302F2D',
     padding: 0,
     margin: 0,
@@ -83,15 +80,13 @@ const styles = StyleSheet.create({
   },
   postfix: {
     fontSize: 15,
-    fontWeight: '400',
-    lineHeight: 18, // 15 * 1.2
+    lineHeight: 18,
     color: '#888684',
     paddingLeft: 4,
   },
   error: {
     fontSize: 12,
-    fontWeight: '400',
-    lineHeight: 14.4, // 12 * 1.2
+    lineHeight: 14.4,
     color: '#D8182E',
   },
 });

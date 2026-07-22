@@ -1,3 +1,45 @@
+/* eslint-env jest */
+
+jest.mock('mobx-react-lite', () => ({
+  observer: (component) => component,
+}));
+
+jest.mock('@/stores/auth.store', () => ({
+  authStore: {
+    isInitialized: true,
+    isAuthenticated: false,
+    isLoading: false,
+    error: null,
+    phone: null,
+    initializeAuth: jest.fn(),
+    sendCode: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
+    clearError: jest.fn(),
+  },
+}));
+
+jest.mock('react-native-keychain', () => ({
+  setGenericPassword: jest.fn(async () => true),
+  getGenericPassword: jest.fn(async () => false),
+  resetGenericPassword: jest.fn(async () => true),
+}));
+
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  return {
+    ...actual,
+    NavigationContainer: ({ children }) => children,
+  };
+});
+
+jest.mock('@react-navigation/native-stack', () => ({
+  createNativeStackNavigator: () => ({
+    Navigator: ({ children }) => children,
+    Screen: () => null,
+  }),
+}));
+
 jest.mock('@expo/vector-icons/MaterialIcons', () => {
   const React = require('react');
   const { Text } = require('react-native');

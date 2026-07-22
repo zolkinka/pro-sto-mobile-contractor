@@ -1,5 +1,8 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
+
 import { Icon } from './icon';
 
 // Доступные цвета для автомобиля (упорядочены логично: ахроматические + хроматические по радуге)
@@ -33,7 +36,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Выберите цвет</Text>
+      <AppText style={styles.label}>Выберите цвет</AppText>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}

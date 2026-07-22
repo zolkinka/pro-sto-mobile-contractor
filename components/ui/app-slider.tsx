@@ -1,6 +1,9 @@
 import { Slider } from '@miblanchard/react-native-slider';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
+
 import { AppSliderProps } from './app-slider/types';
 
 /**
@@ -239,9 +242,9 @@ export const AppSlider: React.FC<AppSliderProps> = ({
               ]}
               onLayout={(e) => setSingleTooltipWidth(e.nativeEvent.layout.width)}
             >
-              <Text style={styles.tooltipText}>
+              <AppText style={styles.tooltipText}>
                 {formatDisplayValue(localValue)}
-              </Text>
+              </AppText>
             </View>
           </View>
 
@@ -265,8 +268,8 @@ export const AppSlider: React.FC<AppSliderProps> = ({
 
           {/* Min/Max labels */}
           <View style={styles.labels}>
-            <Text style={styles.labelText}>{formatDisplayValue(min)}</Text>
-          <Text style={styles.labelText}>{formatDisplayValue(max)}</Text>
+            <AppText style={styles.labelText}>{formatDisplayValue(min)}</AppText>
+          <AppText style={styles.labelText}>{formatDisplayValue(max)}</AppText>
         </View>
       </View>
     );
@@ -326,9 +329,9 @@ export const AppSlider: React.FC<AppSliderProps> = ({
             ]}
             onLayout={(e) => setLeftTooltipWidth(e.nativeEvent.layout.width)}
           >
-            <Text style={styles.tooltipText}>
+            <AppText style={styles.tooltipText}>
               {formatDisplayValue(localRange[0])}
-            </Text>
+            </AppText>
           </View>
           <View
             style={[
@@ -338,9 +341,9 @@ export const AppSlider: React.FC<AppSliderProps> = ({
             ]}
             onLayout={(e) => setRightTooltipWidth(e.nativeEvent.layout.width)}
           >
-            <Text style={styles.tooltipText}>
+            <AppText style={styles.tooltipText}>
               {formatDisplayValue(localRange[1])}
-            </Text>
+            </AppText>
           </View>
         </View>
 
@@ -364,8 +367,8 @@ export const AppSlider: React.FC<AppSliderProps> = ({
 
         {/* Min/Max labels */}
         <View style={styles.labels}>
-          <Text style={styles.labelText}>{formatDisplayValue(min)}</Text>
-        <Text style={styles.labelText}>{formatDisplayValue(max)}</Text>
+          <AppText style={styles.labelText}>{formatDisplayValue(min)}</AppText>
+        <AppText style={styles.labelText}>{formatDisplayValue(max)}</AppText>
       </View>
     </View>
   );

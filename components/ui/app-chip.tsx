@@ -1,5 +1,7 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
 
 export interface AppChipProps {
   label: string;
@@ -28,9 +30,7 @@ export const AppChip: React.FC<AppChipProps> = ({
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={[styles.text, active && styles.textActive]}>
-        {label}
-      </Text>
+      <AppText style={[styles.text, active && styles.textActive]}>{label}</AppText>
     </Pressable>
   );
 };

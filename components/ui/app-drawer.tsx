@@ -7,11 +7,12 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+
+import { AppText } from '@/components/ui/app-text';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -195,7 +196,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             )
           ) : (
             <View style={[styles.header, { backgroundColor }]}>
-              {title && <Text style={styles.title}>{title}</Text>}
+              {title && <AppText style={styles.title}>{title}</AppText>}
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleClose}

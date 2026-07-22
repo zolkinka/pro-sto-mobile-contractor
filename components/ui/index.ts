@@ -1,6 +1,12 @@
 export { AppButton } from './app-button';
 export type { AppButtonProps } from './app-button';
 
+export { AppText } from './app-text';
+export type { AppTextProps, AppTextWeight } from './app-text';
+
+export { AppTextInput } from './app-text-input';
+export type { AppTextInputProps } from './app-text-input';
+
 export { AppInput } from './app-input';
 export type { AppInputProps } from './app-input';
 

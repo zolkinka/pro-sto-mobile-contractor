@@ -2,7 +2,6 @@
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
     "strict": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }

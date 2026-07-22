@@ -5,6 +5,8 @@
 
 import { Platform } from 'react-native';
 
+import { fonts } from './typography';
+
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
@@ -72,6 +74,13 @@ export const Fonts = Platform.select({
  * Design system tokens from Figma
  */
 export const theme = {
+  fonts: {
+    regular: fonts.regular,
+    medium: fonts.medium,
+    semiBold: fonts.semiBold,
+    /** Web/admin-style stack — for reference only in RN use fonts.* */
+    onest: fonts.regular,
+  },
   colors: {
     gray: {
       900: '#302F2D',

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppText } from '@/components/ui/app-text';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
@@ -85,21 +86,21 @@ export function UiShowcaseScreen() {
               selected={radioValue === 'option-a'}
               onPress={() => setRadioValue('option-a')}
             />
-            <Text style={styles.radioLabel}>Вариант A</Text>
+            <AppText style={styles.radioLabel}>Вариант A</AppText>
           </View>
           <View style={styles.radioRow}>
             <AppRadio
               selected={radioValue === 'option-b'}
               onPress={() => setRadioValue('option-b')}
             />
-            <Text style={styles.radioLabel}>Вариант B</Text>
+            <AppText style={styles.radioLabel}>Вариант B</AppText>
           </View>
         </Section>
 
         <Section title="Switch">
           <View style={styles.radioRow}>
             <AppSwitch value={switchEnabled} onValueChange={setSwitchEnabled} />
-            <Text style={styles.radioLabel}>Уведомления</Text>
+            <AppText style={styles.radioLabel}>Уведомления</AppText>
           </View>
         </Section>
 
@@ -153,8 +154,8 @@ export function UiShowcaseScreen() {
 
         <Section title="Card">
           <AppCardContainer>
-            <Text style={styles.cardTitle}>Карточка контрагента</Text>
-            <Text style={styles.cardText}>Пример контента внутри AppCardContainer</Text>
+            <AppText style={styles.cardTitle}>Карточка контрагента</AppText>
+            <AppText style={styles.cardText}>Пример контента внутри AppCardContainer</AppText>
           </AppCardContainer>
         </Section>
 
@@ -191,7 +192,7 @@ export function UiShowcaseScreen() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <ThemedView style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <AppText style={styles.sectionTitle}>{title}</AppText>
       {children}
     </ThemedView>
   );
