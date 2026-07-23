@@ -31,8 +31,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<key>NSCameraUsageDescription</key>
+	<string>Необходимо для сканирования QR-кодов записей</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Не пропускайте новые записи и уведомления о слотах</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
