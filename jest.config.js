@@ -5,9 +5,10 @@ module.exports = {
   setupFilesAfterEnv: [...(reactNativePreset.setupFilesAfterEnv ?? []), '<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     ...reactNativePreset.moduleNameMapper,
+    '^@env$': '<rootDir>/__mocks__/env.js',
     '^@/(.*)$': '<rootDir>/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(\\.pnpm/.+/node_modules/)?((jest-)?react-native|@react-native|react-native-.*|@react-navigation|@expo))',
+    'node_modules/(?!(\\.pnpm/.+/node_modules/)?((jest-)?react-native|@react-native|react-native-.*|@react-navigation))',
   ],
 };

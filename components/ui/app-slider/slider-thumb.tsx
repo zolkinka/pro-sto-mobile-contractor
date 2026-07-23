@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Platform, StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
 import Animated, { SharedValue, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useTooltipPosition } from './use-tooltip-position';
 
@@ -104,9 +106,9 @@ export const SliderThumb: React.FC<SliderThumbProps> = ({
           tooltipWidth.value = event.nativeEvent.layout.width;
         }}
       >
-        <Text style={styles.tooltipText}>
+        <AppText style={styles.tooltipText}>
           {formatDisplayValue(displayValue)}
-        </Text>
+        </AppText>
       </Animated.View>
       <View 
         style={styles.touchableWrapper}

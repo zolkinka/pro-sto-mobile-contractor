@@ -5,10 +5,11 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+
+import { AppText } from '@/components/ui/app-text';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -107,7 +108,7 @@ export const CompactDrawer: React.FC<CompactDrawerProps> = ({
                 {/* Handle bar */}
                 <View style={styles.handleBar} />
                 {title && (
-                  <Text style={styles.title}>{title}</Text>
+                  <AppText style={styles.title}>{title}</AppText>
                 )}
               </View>
 

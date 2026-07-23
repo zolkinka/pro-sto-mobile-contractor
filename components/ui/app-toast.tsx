@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { AppText } from '@/components/ui/app-text';
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -58,7 +60,7 @@ export const AppToast: React.FC<AppToastProps> = ({
   return (
     <View style={styles.container} pointerEvents="none">
       <Animated.View style={[styles.toast, animatedStyle]}>
-        <Text style={styles.message}>{message}</Text>
+        <AppText style={styles.message}>{message}</AppText>
       </Animated.View>
     </View>
   );
