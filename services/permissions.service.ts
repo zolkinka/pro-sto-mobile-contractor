@@ -38,7 +38,8 @@ function loadPermissionsModule(): PermissionsModule | null {
   try {
     permissionsModule = require('react-native-permissions') as PermissionsModule;
     return permissionsModule;
-  } catch {
+  } catch (error) {
+    console.warn('[PermissionsService] failed to load native module:', error);
     permissionsModule = null;
     return null;
   }
@@ -65,6 +66,7 @@ function isAndroid13OrAbove(): boolean {
 }
 
 export class PermissionsService {
+  /** Whether `react-native-permissions` loaded; used for diagnostics and Android/iOS fallbacks. */
   static isNativeModuleAvailable(): boolean {
     return loadPermissionsModule() != null;
   }
@@ -84,8 +86,8 @@ export class PermissionsService {
           status,
           canRequestAgain: mapCanRequestAgain(status),
         };
-      } catch {
-        // Fall through to platform fallback.
+      } catch (error) {
+        console.warn('[PermissionsService] getCameraState native call failed:', error);
       }
     }
 
@@ -112,8 +114,8 @@ export class PermissionsService {
           status,
           canRequestAgain: mapCanRequestAgain(status),
         };
-      } catch {
-        // Fall through to platform fallback.
+      } catch (error) {
+        console.warn('[PermissionsService] getNotificationsState native call failed:', error);
       }
     }
 
@@ -157,8 +159,8 @@ export class PermissionsService {
           status,
           canRequestAgain: mapCanRequestAgain(status),
         };
-      } catch {
-        // Fall through to platform fallback.
+      } catch (error) {
+        console.warn('[PermissionsService] requestCamera native call failed:', error);
       }
     }
 
@@ -199,8 +201,8 @@ export class PermissionsService {
           status,
           canRequestAgain: mapCanRequestAgain(status),
         };
-      } catch {
-        // Fall through to platform fallback.
+      } catch (error) {
+        console.warn('[PermissionsService] requestNotifications native call failed:', error);
       }
     }
 
@@ -227,8 +229,8 @@ export class PermissionsService {
         await module.openSettings();
         return;
       }
-    } catch {
-      // Fall through to Linking.
+    } catch (error) {
+      console.warn('[PermissionsService] openAppSettings native call failed:', error);
     }
 
     await Linking.openSettings();

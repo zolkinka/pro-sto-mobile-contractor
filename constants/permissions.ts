@@ -1,5 +1,10 @@
 export const PERMISSIONS_CONTENT_WIDTH = 358;
 
+export const PERMISSION_FOOTER_LABELS = {
+  request: 'Запросить',
+  later: 'Позже',
+} as const;
+
 /** Device-scoped onboarding copy — shown once per device, not per user account. */
 export const CAMERA_PERMISSION_COPY = {
   titleLine1: 'Разрешите доступ',

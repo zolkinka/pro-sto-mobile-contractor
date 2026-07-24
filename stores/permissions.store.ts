@@ -82,6 +82,10 @@ export class PermissionsStore {
     }
   }
 
+  /**
+   * Contextual permission gate for feature screens (QR scanner, push settings, etc.).
+   * Not used during onboarding — call when the user tries to use a protected feature.
+   */
   async ensurePermission(kind: AppPermissionKind): Promise<boolean> {
     try {
       const state =

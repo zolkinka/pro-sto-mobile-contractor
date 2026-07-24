@@ -3,16 +3,20 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
-import { PERMISSIONS_CONTENT_WIDTH } from '@/constants/permissions';
+import { PERMISSION_FOOTER_LABELS, PERMISSIONS_CONTENT_WIDTH } from '@/constants/permissions';
 import { theme } from '@/constants/theme';
 
 interface PermissionFooterProps {
+  requestLabel?: string;
+  laterLabel?: string;
   onRequest: () => void;
   onLater: () => void;
   isRequesting?: boolean;
 }
 
 export function PermissionFooter({
+  requestLabel = PERMISSION_FOOTER_LABELS.request,
+  laterLabel = PERMISSION_FOOTER_LABELS.later,
   onRequest,
   onLater,
   isRequesting = false,
@@ -20,7 +24,7 @@ export function PermissionFooter({
   return (
     <View style={styles.container}>
       <AppButton
-        label="Запросить"
+        label={requestLabel}
         onPress={onRequest}
         disabled={isRequesting}
         style={styles.primaryButton}
@@ -30,7 +34,7 @@ export function PermissionFooter({
         disabled={isRequesting}
         style={({ pressed }) => [styles.laterButton, pressed && styles.pressed]}>
         <AppText weight="regular" style={styles.laterText}>
-          Позже
+          {laterLabel}
         </AppText>
       </Pressable>
     </View>

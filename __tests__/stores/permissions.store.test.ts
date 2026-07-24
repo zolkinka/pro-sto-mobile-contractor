@@ -1,4 +1,5 @@
 import { PermissionsStorageService } from '@/services/permissions-storage.service';
+import { PermissionsService } from '@/services/permissions.service';
 import { PermissionsStore } from '@/stores/permissions.store';
 
 jest.mock('@/services/permissions.service', () => ({
@@ -62,12 +63,23 @@ describe('PermissionsStore', () => {
     expect(store.hasCompletedOnboarding).toBe(false);
   });
 
-  it('requests camera permission without throwing', async () => {
+  it('calls PermissionsService.requestCamera for camera permission', async () => {
     jest.spyOn(PermissionsStorageService, 'getOnboardingCompleted').mockResolvedValue(false);
 
     const store = new PermissionsStore();
     await store.initialize();
+    await store.requestPermission('camera');
 
-    await expect(store.requestPermission('camera')).resolves.toBeUndefined();
+    expect(PermissionsService.requestCamera).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls PermissionsService.requestNotifications for notifications permission', async () => {
+    jest.spyOn(PermissionsStorageService, 'getOnboardingCompleted').mockResolvedValue(false);
+
+    const store = new PermissionsStore();
+    await store.initialize();
+    await store.requestPermission('notifications');
+
+    expect(PermissionsService.requestNotifications).toHaveBeenCalledTimes(1);
   });
 });

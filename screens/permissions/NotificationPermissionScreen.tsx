@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 
 import { PermissionScreenLayout } from '@/components/permissions/permission-screen-layout';
 import { NOTIFICATIONS_PERMISSION_COPY } from '@/constants/permissions';
@@ -9,12 +10,26 @@ import { permissionsStore } from '@/stores/permissions.store';
 
 type Navigation = NativeStackNavigationProp<PermissionStackParamList, 'Notifications'>;
 
+function showOnboardingSaveError(error: unknown): void {
+  console.warn('[NotificationPermissionScreen] completeOnboarding failed:', error);
+  Alert.alert(
+    'Не удалось продолжить',
+    'Не получилось сохранить настройки. Попробуйте ещё раз или перезапустите приложение.',
+  );
+}
+
 export function NotificationPermissionScreen() {
   const navigation = useNavigation<Navigation>();
   const [isRequesting, setIsRequesting] = useState(false);
 
-  const finishOnboarding = async () => {
-    await permissionsStore.completeOnboarding();
+  const completeOnboardingWithFeedback = async (): Promise<boolean> => {
+    try {
+      await permissionsStore.completeOnboarding();
+      return true;
+    } catch (error) {
+      showOnboardingSaveError(error);
+      return false;
+    }
   };
 
   const handleRequest = async () => {
@@ -25,9 +40,7 @@ export function NotificationPermissionScreen() {
     setIsRequesting(true);
     try {
       await permissionsStore.requestPermission('notifications');
-      await finishOnboarding();
-    } catch {
-      // Stay on screen if onboarding flag failed to persist.
+      await completeOnboardingWithFeedback();
     } finally {
       setIsRequesting(false);
     }
@@ -40,9 +53,7 @@ export function NotificationPermissionScreen() {
 
     setIsRequesting(true);
     try {
-      await finishOnboarding();
-    } catch {
-      // Stay on screen if onboarding flag failed to persist.
+      await completeOnboardingWithFeedback();
     } finally {
       setIsRequesting(false);
     }
