@@ -2,6 +2,12 @@ import React from "react";
 import { ViewStyle } from "react-native";
 import Svg, { Circle, G, Path, Rect } from "react-native-svg";
 
+import {
+  PHOSPHOR_VIEWBOX,
+  phosphorIconPaths,
+  type PhosphorIconPathName,
+} from "./phosphor-icon-paths";
+
 export type IconName =
   | "home"
   | "search"
@@ -9,6 +15,7 @@ export type IconName =
   | "car"
   | "calendar"
   | "user"
+  | "user-gear"
   | "settings"
   | "location"
   | "phone"
@@ -16,6 +23,7 @@ export type IconName =
   | "check"
   | "close"
   | "arrow-left"
+  | "direction-left"
   | "arrow-right"
   | "car-wash"
   | "tire-service"
@@ -26,10 +34,17 @@ export type IconName =
   | "navigation"
   | "filter"
   | "orders"
+  | "qr-code"
+  | "qr-code-outline"
+  | "identification-card"
+  | "garage"
+  | "clock"
   | "edit"
   | "notification"
   | "briefcase"
   | "chevron-right"
+  | "caret-up"
+  | "caret-down"
   | "info"
   | "copy"
   | "logout"
@@ -56,7 +71,20 @@ export interface IconProps {
 
 const ICON_VIEWBOX: Partial<Record<IconName, string>> = {
   telegram: "0 0 32 32",
+  car: PHOSPHOR_VIEWBOX,
+  clock: PHOSPHOR_VIEWBOX,
+  user: PHOSPHOR_VIEWBOX,
+  "user-gear": PHOSPHOR_VIEWBOX,
+  garage: PHOSPHOR_VIEWBOX,
+  "identification-card": PHOSPHOR_VIEWBOX,
+  "qr-code": PHOSPHOR_VIEWBOX,
+  "qr-code-outline": PHOSPHOR_VIEWBOX,
+  notification: PHOSPHOR_VIEWBOX,
 };
+
+function renderPhosphorIcon(name: PhosphorIconPathName, color: string) {
+  return <Path d={phosphorIconPaths[name]} fill={color} />;
+}
 
 /**
  * Универсальный компонент для отображения SVG иконок
@@ -180,28 +208,7 @@ export const Icon: React.FC<IconProps> = ({
         );
 
       case "car":
-        return (
-          <G>
-            <Path
-              d="M5 12h14l-1.5-4.5A2 2 0 0 0 15.6 6H8.4a2 2 0 0 0-1.9 1.5L5 12z"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            <Path
-              d="M5 12v6a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-6"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            <Circle cx="8" cy="15" r="1" fill={color} />
-            <Circle cx="16" cy="15" r="1" fill={color} />
-          </G>
-        );
+        return renderPhosphorIcon("car", color);
 
       case "calendar":
         return (
@@ -226,25 +233,10 @@ export const Icon: React.FC<IconProps> = ({
         );
 
       case "user":
-        return (
-          <G>
-            <Circle
-              cx="12"
-              cy="8"
-              r="5"
-              stroke={color}
-              strokeWidth="2"
-              fill="none"
-            />
-            <Path
-              d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </G>
-        );
+        return renderPhosphorIcon("user", color);
+
+      case "user-gear":
+        return renderPhosphorIcon("user-gear", color);
 
       case "settings":
         return (
@@ -353,6 +345,18 @@ export const Icon: React.FC<IconProps> = ({
           />
         );
 
+      case "direction-left":
+        return (
+          <Path
+            d="M15 18l-6-6 6-6"
+            stroke={color}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        );
+
       case "arrow-right":
         return (
           <Path
@@ -434,6 +438,21 @@ export const Icon: React.FC<IconProps> = ({
           </G>
         );
 
+      case "qr-code":
+        return renderPhosphorIcon("qr-code", color);
+
+      case "qr-code-outline":
+        return renderPhosphorIcon("qr-code-outline", color);
+
+      case "identification-card":
+        return renderPhosphorIcon("identification-card", color);
+
+      case "garage":
+        return renderPhosphorIcon("garage", color);
+
+      case "clock":
+        return renderPhosphorIcon("clock", color);
+
       case "edit":
         return (
           <Path
@@ -446,18 +465,7 @@ export const Icon: React.FC<IconProps> = ({
         );
 
       case "notification":
-        return (
-          <G>
-            <Path
-              d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a1.999 1.999 0 0 1-3.46 0"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </G>
-        );
+        return renderPhosphorIcon("notification", color);
 
       case "briefcase":
         return (
@@ -491,6 +499,30 @@ export const Icon: React.FC<IconProps> = ({
             d="M9 18l6-6-6-6"
             stroke={color}
             strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        );
+
+      case "caret-up":
+        return (
+          <Path
+            d="M6 15l6-6 6 6"
+            stroke={color}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        );
+
+      case "caret-down":
+        return (
+          <Path
+            d="M6 9l6 6 6-6"
+            stroke={color}
+            strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"

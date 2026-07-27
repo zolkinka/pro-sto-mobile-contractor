@@ -23,6 +23,11 @@ jest.mock('@/stores/auth.store', () => ({
   },
 }));
 
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { View } = require('react-native');
+  return View;
+});
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
