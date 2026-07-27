@@ -23,10 +23,33 @@ jest.mock('@/stores/auth.store', () => ({
   },
 }));
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 jest.mock('react-native-keychain', () => ({
   setGenericPassword: jest.fn(async () => true),
   getGenericPassword: jest.fn(async () => false),
   resetGenericPassword: jest.fn(async () => true),
+}));
+
+jest.mock('react-native-permissions', () => ({
+  PERMISSIONS: {
+    IOS: { CAMERA: 'ios.permission.CAMERA' },
+    ANDROID: { CAMERA: 'android.permission.CAMERA' },
+  },
+  RESULTS: {
+    UNAVAILABLE: 'unavailable',
+    BLOCKED: 'blocked',
+    DENIED: 'denied',
+    GRANTED: 'granted',
+    LIMITED: 'limited',
+  },
+  check: jest.fn(async () => 'denied'),
+  request: jest.fn(async () => 'granted'),
+  checkNotifications: jest.fn(async () => ({ status: 'denied' })),
+  requestNotifications: jest.fn(async () => ({ status: 'granted' })),
+  openSettings: jest.fn(async () => undefined),
 }));
 
 jest.mock('@react-navigation/native', () => {

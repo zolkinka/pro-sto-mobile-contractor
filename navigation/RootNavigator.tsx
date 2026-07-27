@@ -6,8 +6,10 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { theme } from '@/constants/theme';
 import { authStore } from '@/stores/auth.store';
+import { permissionsStore } from '@/stores/permissions.store';
 
 import { AuthStack } from './AuthStack';
+import { PermissionStack } from './PermissionStack';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -18,7 +20,9 @@ function MainStackScreen() {
 }
 
 export const RootNavigator = observer(function RootNavigator() {
-  if (!authStore.isInitialized) {
+  const isBootstrapping = !authStore.isInitialized || !permissionsStore.isInitialized;
+
+  if (isBootstrapping) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={theme.colors.gray[900]} />
@@ -26,14 +30,20 @@ export const RootNavigator = observer(function RootNavigator() {
     );
   }
 
+  const rootFlow = !authStore.isAuthenticated
+    ? 'auth'
+    : permissionsStore.hasCompletedOnboarding
+      ? 'main'
+      : 'permissions';
+
   return (
-    <NavigationContainer key={authStore.isAuthenticated ? 'main' : 'auth'}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {authStore.isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainStackScreen} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStack} />
+    <NavigationContainer>
+      <Stack.Navigator key={rootFlow} screenOptions={{ headerShown: false }}>
+        {rootFlow === 'auth' && <Stack.Screen name="Auth" component={AuthStack} />}
+        {rootFlow === 'permissions' && (
+          <Stack.Screen name="Permissions" component={PermissionStack} />
         )}
+        {rootFlow === 'main' && <Stack.Screen name="Main" component={MainStackScreen} />}
       </Stack.Navigator>
     </NavigationContainer>
   );
