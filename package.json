@@ -6,10 +6,10 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "react-native start",
+    "start": "node scripts/patch-metro-keys.js && CI= react-native start",
     "test": "jest",
     "link-assets": "npx react-native-asset",
-    "postinstall": "npm run link-assets"
+    "postinstall": "node scripts/patch-metro-keys.js && npm run link-assets"
   },
   "dependencies": {
     "@miblanchard/react-native-slider": "^2.6.0",
