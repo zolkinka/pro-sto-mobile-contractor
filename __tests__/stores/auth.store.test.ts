@@ -4,8 +4,14 @@ jest.mock('@/services/api-client', () => ({
   setAuthAccessToken: jest.fn(),
   setTokenRefreshHandler: jest.fn(),
   isApiUnauthorizedError: jest.fn((error: unknown) => {
-    const axios = require('axios');
-    return axios.isAxiosError(error) && error.response?.status === 401;
+    const { isAxiosError } = require('axios') as typeof import('axios');
+    return (
+      isAxiosError(error) &&
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      (error as { response?: { status?: number } }).response?.status === 401
+    );
   }),
   getApiErrorMessage: jest.fn(() => 'API error'),
 }));
@@ -89,7 +95,7 @@ function createUnauthorizedError() {
     status: 401,
     data: {},
     headers: {},
-    config: {},
+    config: { headers: {} } as import('axios').InternalAxiosRequestConfig,
     statusText: 'Unauthorized',
   });
 }
@@ -152,6 +158,17 @@ describe('AuthStore', () => {
       expect(result).toBe(true);
       expect(TokenStorageService.savePendingPhone).toHaveBeenCalledWith('+79991234567');
       expect(store.phone).toBe('+79991234567');
+    });
+
+    it('still succeeds when pending phone cannot be saved', async () => {
+      (sendAdminAuthCode as jest.Mock).mockResolvedValue({ success: true, message: 'ok' });
+      (TokenStorageService.savePendingPhone as jest.Mock).mockRejectedValue(new Error('keychain'));
+
+      const result = await store.sendCode('+7 (999) 123-45-67');
+
+      expect(result).toBe(true);
+      expect(store.phone).toBe('+79991234567');
+      expect(store.error).toBeNull();
     });
   });
 
