@@ -1,6 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { HomeScreenStub } from '@/screens/home/HomeScreenStub';
+import { BookingCodeScreen } from '@/screens/bookings/BookingCodeScreen';
+import { BookingConfirmedScreen } from '@/screens/bookings/BookingConfirmedScreen';
+import { BookingsListScreen } from '@/screens/bookings/BookingsListScreen';
+import { OrderDetailsScreen } from '@/screens/bookings/OrderDetailsScreen';
+import { QrScanScreen } from '@/screens/bookings/QrScanScreen';
 
 import type { MainStackParamList } from './types';
 
@@ -14,7 +18,11 @@ function DevUiShowcaseScreen(props: object) {
 export function MainStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomeScreenStub} />
+      <Stack.Screen name="Home" component={BookingsListScreen} />
+      <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+      <Stack.Screen name="QrScan" component={QrScanScreen} />
+      <Stack.Screen name="BookingCode" component={BookingCodeScreen} />
+      <Stack.Screen name="BookingConfirmed" component={BookingConfirmedScreen} />
       {__DEV__ && (
         <Stack.Screen name="UiShowcase" component={DevUiShowcaseScreen} />
       )}

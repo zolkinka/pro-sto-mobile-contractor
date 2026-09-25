@@ -23,8 +23,12 @@ export const apiClient = axios.create({
   },
 });
 
+function isAuthEndpoint(url?: string) {
+  return Boolean(url?.includes('/admin-auth/') || url?.includes('/auth/refresh'));
+}
+
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (accessToken && config.headers) {
+  if (accessToken && config.headers && !isAuthEndpoint(config.url)) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
 
@@ -38,15 +42,11 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    const isAuthEndpoint =
-      originalRequest?.url?.includes('/admin-auth/') ||
-      originalRequest?.url?.includes('/auth/refresh');
-
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      !isAuthEndpoint &&
+      !isAuthEndpoint(originalRequest.url) &&
       refreshHandler
     ) {
       originalRequest._retry = true;
@@ -67,30 +67,54 @@ export function isApiUnauthorizedError(error: unknown): boolean {
 }
 
 export function getApiErrorMessage(error: unknown): string {
-  if (!axios.isAxiosError(error)) {
+  try {
+    if (!axios.isAxiosError(error)) {
+      if (error instanceof Error && typeof error.message === 'string' && error.message.trim()) {
+        return error.message;
+      }
+
+      return 'Произошла ошибка. Попробуйте ещё раз';
+    }
+
+    if (!error.response) {
+      const axiosCode = typeof error.code === 'string' ? error.code : undefined;
+
+      if (axiosCode === 'ECONNABORTED') {
+        return 'Превышено время ожидания ответа сервера';
+      }
+
+      return 'Нет связи с сервером. Проверьте интернет и попробуйте снова';
+    }
+
+    const status = error.response.status;
+    const data = error.response.data;
+    let serverMessage: string | null = null;
+
+    if (data && typeof data === 'object' && 'message' in data) {
+      const rawMessage = (data as { message?: unknown }).message;
+
+      if (typeof rawMessage === 'string' && rawMessage.trim()) {
+        serverMessage = rawMessage;
+      } else if (rawMessage != null) {
+        serverMessage = String(rawMessage);
+      }
+    }
+
+    switch (status) {
+      case 400:
+        return serverMessage || 'Неверный код или формат данных';
+      case 401:
+        return serverMessage || 'Неверные данные для входа';
+      case 404:
+        return serverMessage || 'Пользователь с таким номером не найден';
+      case 410:
+        return serverMessage || 'Код истёк. Запросите новый код';
+      case 429:
+        return serverMessage || 'Превышено количество попыток. Попробуйте позже';
+      default:
+        return serverMessage || 'Произошла ошибка. Попробуйте ещё раз';
+    }
+  } catch {
     return 'Произошла ошибка. Попробуйте ещё раз';
-  }
-
-  const status = error.response?.status;
-  const serverMessage =
-    typeof error.response?.data === 'object' &&
-    error.response?.data &&
-    'message' in error.response.data
-      ? String((error.response.data as { message: unknown }).message)
-      : null;
-
-  switch (status) {
-    case 400:
-      return serverMessage || 'Неверный код или формат данных';
-    case 401:
-      return serverMessage || 'Неверные данные для входа';
-    case 404:
-      return 'Пользователь с таким номером не найден';
-    case 410:
-      return 'Код истёк. Запросите новый код';
-    case 429:
-      return 'Превышено количество попыток. Попробуйте позже';
-    default:
-      return serverMessage || 'Произошла ошибка. Попробуйте ещё раз';
   }
 }
