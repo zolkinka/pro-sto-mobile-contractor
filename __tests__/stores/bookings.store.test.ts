@@ -197,6 +197,41 @@ describe('BookingsStore', () => {
     expect(store.nearestBookingDate).not.toBeNull();
   });
 
+  it('picks the nearest future day when the selected day is empty', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    (fetchBookingsListForDay as jest.Mock).mockResolvedValueOnce({
+      data: [],
+      total: 0,
+      limit: 100,
+      offset: 0,
+    });
+    (fetchBookingsListFlexible as jest.Mock).mockResolvedValueOnce({
+      data: [
+        {
+          ...mockListItem,
+          uuid: 'old-booking',
+          start_time: '2020-01-01T10:00:00.000Z',
+        },
+        {
+          ...mockListItem,
+          uuid: 'near-booking',
+          start_time: '2026-07-02T12:00:00.000Z',
+        },
+      ],
+      total: 2,
+      limit: 200,
+      offset: 0,
+    });
+
+    await store.fetchBookings();
+
+    expect(store.nearestBookingDate?.getFullYear()).toBe(2026);
+    expect(store.nearestBookingDate?.getMonth()).toBe(6);
+    expect(store.nearestBookingDate?.getDate()).toBe(2);
+  });
+
   it('confirms a booking by code and updates its status', async () => {
     const store = new BookingsStore();
     store.bookings = [{ ...mockListItem }];

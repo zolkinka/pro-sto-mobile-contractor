@@ -1,8 +1,8 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FlashlightIcon } from '@/components/bookings/flashlight-icon';
@@ -27,6 +27,16 @@ const FRAME_COLOR = '#A3A09E';
 const ERROR_COLOR = '#D8182E';
 const WRONG_BOOKING_MESSAGE = 'QR-код относится к другой записи';
 
+function resetScanSession(
+  confirmingRef: React.MutableRefObject<boolean>,
+  blockedScanRef: React.MutableRefObject<string | null>,
+  setIsConfirming: (value: boolean) => void,
+): void {
+  confirmingRef.current = false;
+  blockedScanRef.current = null;
+  setIsConfirming(false);
+}
+
 export function QrScanScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<QrScanRoute>();
@@ -37,28 +47,63 @@ export function QrScanScreen() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState(false);
   const confirmingRef = useRef(false);
+  const blockedScanRef = useRef<string | null>(null);
 
   const requestCamera = useCallback(async () => {
     const granted = await permissionsStore.ensurePermission('camera');
     setCameraGranted(granted);
+    return granted;
   }, []);
 
   useEffect(() => {
     requestCamera().catch(() => undefined);
   }, [requestCamera]);
 
-  const showIllustration = !(cameraGranted && cameraAvailable);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        requestCamera().catch(() => undefined);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [requestCamera]);
+
+  useFocusEffect(
+    useCallback(() => {
+      resetScanSession(confirmingRef, blockedScanRef, setIsConfirming);
+      setErrorMessage(null);
+    }, []),
+  );
+
+  const showCameraPreview = cameraGranted && cameraAvailable;
+  const showPermissionPrompt = !cameraGranted;
 
   const finishConfirmed = (uuid: string) => {
+    resetScanSession(confirmingRef, blockedScanRef, setIsConfirming);
     navigation.navigate('BookingConfirmed', { bookingUuid: uuid });
   };
 
   const handleCodeScanned = async (raw: string) => {
+    const normalized = raw.trim();
+
+    if (!normalized) {
+      return;
+    }
+
+    if (blockedScanRef.current === normalized) {
+      return;
+    }
+
+    if (blockedScanRef.current && blockedScanRef.current !== normalized) {
+      blockedScanRef.current = null;
+    }
+
     if (confirmingRef.current) {
       return;
     }
 
-    const payload = parseBookingQrPayload(raw);
+    const payload = parseBookingQrPayload(normalized);
 
     if (!payload) {
       setErrorMessage(getQrScanErrorMessage());
@@ -81,6 +126,7 @@ export function QrScanScreen() {
       return;
     }
 
+    blockedScanRef.current = normalized;
     confirmingRef.current = false;
     setIsConfirming(false);
     setErrorMessage(result.message);
@@ -107,17 +153,35 @@ export function QrScanScreen() {
         <View
           style={[
             styles.frame,
-            showIllustration
+            !showCameraPreview && !showPermissionPrompt
               ? styles.frameIllustration
               : { borderColor: errorMessage ? ERROR_COLOR : FRAME_COLOR },
+            showPermissionPrompt ? styles.framePermission : null,
           ]}>
-          {showIllustration ? (
+          {showPermissionPrompt ? (
+            <View style={styles.permissionFallback}>
+              <AppText weight="regular" style={styles.permissionText}>
+                Для сканирования QR нужен доступ к камере
+              </AppText>
+              <AppButton
+                label="Разрешить камеру"
+                variant="secondary"
+                onPress={() => {
+                  requestCamera().catch(() => undefined);
+                }}
+                style={styles.permissionButton}
+              />
+            </View>
+          ) : null}
+
+          {!showCameraPreview && !showPermissionPrompt ? (
             <Image
               source={errorMessage ? scanFrameError : scanFrame}
               style={styles.frameImage}
               resizeMode="cover"
             />
           ) : null}
+
           {cameraGranted ? (
             <QrCameraPreview
               active={!isConfirming}
@@ -129,7 +193,7 @@ export function QrScanScreen() {
             />
           ) : null}
 
-          {showIllustration ? null : (
+          {showCameraPreview ? (
             <Pressable
               style={styles.torchButton}
               onPress={() => setTorchOn((current) => !current)}
@@ -137,7 +201,7 @@ export function QrScanScreen() {
               accessibilityLabel="Фонарик">
               <FlashlightIcon />
             </Pressable>
-          )}
+          ) : null}
         </View>
 
         {errorMessage ? (
@@ -208,6 +272,10 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: 'transparent',
   },
+  framePermission: {
+    borderWidth: 0,
+    backgroundColor: theme.colors.gray[100],
+  },
   frameImage: {
     width: '100%',
     height: '100%',
@@ -224,6 +292,15 @@ const styles = StyleSheet.create({
     lineHeight: 19.2,
     textAlign: 'center',
     color: theme.colors.gray[900],
+  },
+  permissionButton: {
+    width: '100%',
+    maxWidth: 280,
+    height: 52,
+    backgroundColor: '#E7E5E4',
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   torchButton: {
     position: 'absolute',

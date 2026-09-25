@@ -20,9 +20,6 @@ export type MainStackParamList = {
   BookingCode: {
     bookingUuid?: string;
   };
-  BookingPhone: {
-    bookingUuid: string;
-  };
   BookingConfirmed: {
     bookingUuid: string;
   };

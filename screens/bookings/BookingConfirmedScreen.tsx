@@ -2,8 +2,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/app-button';
@@ -19,11 +19,6 @@ type BookingConfirmedRoute = RouteProp<MainStackParamList, 'BookingConfirmed'>;
 
 const SUCCESS_GREEN = '#22C55E';
 const PRICE_GREEN = '#16A34A';
-const LINK_BLUE = '#3B6CFF';
-const CHIP_BG = '#F3F1EE';
-
-const SMS_REMINDERS = ['2 часа', '4 часа', '8 часов', '1 день', '2 дня'] as const;
-
 function formatClock(iso: string): string {
   return new Date(iso).toLocaleTimeString('ru-RU', {
     hour: '2-digit',
@@ -36,7 +31,6 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
   const navigation = useNavigation<Navigation>();
   const route = useRoute<BookingConfirmedRoute>();
   const bookingUuid = route.params.bookingUuid;
-  const [smsReminder, setSmsReminder] = useState<(typeof SMS_REMINDERS)[number] | null>(null);
 
   const booking =
     bookingsStore.selectedBooking?.uuid === bookingUuid
@@ -79,36 +73,6 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
           onPress={() => navigation.navigate('Home')}
           style={styles.homeButton}
         />
-
-        <AppText weight="regular" style={styles.remindLabel}>
-          Напомнить в SMS за:
-        </AppText>
-
-        <View style={styles.chips}>
-          {SMS_REMINDERS.map((label) => {
-            const selected = smsReminder === label;
-
-            return (
-              <Pressable
-                key={label}
-                onPress={() => setSmsReminder(label)}
-                style={[styles.chip, selected && styles.chipSelected]}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}>
-                <AppText weight="regular" style={styles.chipText}>
-                  {label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <Pressable style={styles.calendar} accessibilityRole="button">
-          <Icon name="calendar" size={16} color={LINK_BLUE} />
-          <AppText weight="regular" style={styles.calendarText}>
-            Добавить в календарь
-          </AppText>
-        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -164,44 +128,5 @@ const styles = StyleSheet.create({
     width: 220,
     height: 52,
     borderRadius: 26,
-  },
-  remindLabel: {
-    marginTop: 36,
-    fontSize: 15,
-    lineHeight: 20,
-    color: theme.colors.gray[900],
-  },
-  chips: {
-    marginTop: 14,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-    maxWidth: 280,
-  },
-  chip: {
-    backgroundColor: CHIP_BG,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipSelected: {
-    backgroundColor: theme.colors.gray[200],
-  },
-  chipText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: theme.colors.gray[800],
-  },
-  calendar: {
-    marginTop: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  calendarText: {
-    fontSize: 15,
-    lineHeight: 20,
-    color: LINK_BLUE,
   },
 });

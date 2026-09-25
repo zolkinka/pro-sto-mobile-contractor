@@ -2,6 +2,8 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 import { API_BASE_URL } from '@/constants/config';
 
+const FETCH_TIMEOUT_MS = 15000;
+
 function joinUrl(path: string): string {
   const base = API_BASE_URL.replace(/\/$/, '');
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -19,6 +21,19 @@ function toAxiosNetworkError(path: string, method: string, cause: unknown): Axio
     method,
     headers: {},
   } as InternalAxiosRequestConfig);
+}
+
+function toAxiosTimeoutError(path: string, method: string): AxiosError {
+  return new AxiosError(
+    `timeout of ${FETCH_TIMEOUT_MS}ms exceeded`,
+    'ECONNABORTED',
+    {
+      url: path,
+      baseURL: API_BASE_URL,
+      method,
+      headers: {},
+    } as InternalAxiosRequestConfig,
+  );
 }
 
 function toAxiosHttpError(
@@ -63,6 +78,28 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  path: string,
+  method: string,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (cause) {
+    if (cause instanceof Error && cause.name === 'AbortError') {
+      throw toAxiosTimeoutError(path, method);
+    }
+
+    throw toAxiosNetworkError(path, method, cause);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function fetchJsonPost<T>(
   path: string,
   body: unknown,
@@ -73,17 +110,26 @@ export async function fetchJsonPost<T>(
   let response: Response;
 
   try {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...options?.headers,
+    response = await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...options?.headers,
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
-  } catch (cause) {
-    throw toAxiosNetworkError(path, 'post', cause);
+      path,
+      'post',
+    );
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw error;
+    }
+
+    throw toAxiosNetworkError(path, 'post', error);
   }
 
   const data = await parseResponseBody(response);
@@ -104,15 +150,24 @@ export async function fetchJsonGet<T>(
   let response: Response;
 
   try {
-    response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        ...options?.headers,
+    response = await fetchWithTimeout(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          ...options?.headers,
+        },
       },
-    });
-  } catch (cause) {
-    throw toAxiosNetworkError(path, 'get', cause);
+      path,
+      'get',
+    );
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw error;
+    }
+
+    throw toAxiosNetworkError(path, 'get', error);
   }
 
   const data = await parseResponseBody(response);
@@ -129,10 +184,14 @@ export async function probeApiHostReachability(): Promise<string> {
   const url = joinUrl('/');
 
   try {
-    const response = await fetch(url, { method: 'GET' });
+    const response = await fetchWithTimeout(url, { method: 'GET' }, '/', 'get');
 
     return `fetchProbe GET / → status=${response.status}`;
   } catch (cause) {
+    if (cause instanceof AxiosError) {
+      return `fetchProbe GET / → error=${cause.message} (${cause.code ?? 'unknown'})`;
+    }
+
     const message = cause instanceof Error ? cause.message : String(cause);
 
     return `fetchProbe GET / → error=${message}`;

@@ -132,12 +132,27 @@ export class BookingsStore {
       return null;
     }
 
-    const sorted = [...items].sort(
-      (left, right) =>
-        new Date(left.start_time).getTime() - new Date(right.start_time).getTime(),
-    );
+    const anchor = startOfDay(this.selectedDate).getTime();
+    const uniqueDayTimestamps = new Set<number>();
 
-    return startOfDay(new Date(sorted[0].start_time));
+    for (const item of items) {
+      uniqueDayTimestamps.add(startOfDay(new Date(item.start_time)).getTime());
+    }
+
+    const dayTimestamps = [...uniqueDayTimestamps].sort((left, right) => left - right);
+    const futureOrSameDays = dayTimestamps.filter((day) => day >= anchor);
+
+    if (futureOrSameDays.length > 0) {
+      return startOfDay(new Date(futureOrSameDays[0]));
+    }
+
+    const pastDays = dayTimestamps.filter((day) => day < anchor);
+
+    if (pastDays.length === 0) {
+      return null;
+    }
+
+    return startOfDay(new Date(pastDays[pastDays.length - 1]));
   }
 
   private async loadBookingsForSelectedDay(): Promise<{

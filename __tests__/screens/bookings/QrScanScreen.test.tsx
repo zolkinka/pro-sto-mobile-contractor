@@ -19,6 +19,7 @@ jest.mock('react-native-safe-area-context', () => {
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
   useRoute: () => ({ params: { bookingUuid: 'booking-1' } }),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock('@/stores/permissions.store', () => ({
@@ -40,5 +41,6 @@ describe('QrScanScreen', () => {
     expect(serialized).toContain('Отсканируйте QR-код клиента');
     expect(serialized).toContain('Попросите показать и наведите камеру');
     expect(serialized).toContain('Подтвердить по 4-х значному коду заказа');
+    expect(serialized).toContain('Разрешить камеру');
   });
 });
