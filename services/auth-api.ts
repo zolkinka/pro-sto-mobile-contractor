@@ -5,6 +5,7 @@ import type {
 } from '@/types/auth';
 
 import { apiClient } from './api-client';
+import { fetchJsonGet, fetchJsonPost } from './fetch-json';
 
 export function mapAdminUserToStoredUser(user: AdminUser) {
   return {
@@ -17,24 +18,14 @@ export function mapAdminUserToStoredUser(user: AdminUser) {
 }
 
 export async function sendAdminAuthCode(phone: string): Promise<AdminSendCodeResponse> {
-  const response = await apiClient.post<AdminSendCodeResponse>(
-    '/api/admin-auth/send-code',
-    { phone },
-  );
-
-  return response.data;
+  return fetchJsonPost<AdminSendCodeResponse>('/api/admin-auth/send-code', { phone });
 }
 
 export async function loginWithAdminAuthCode(
   phone: string,
   code: string,
 ): Promise<AdminAuthResponse> {
-  const response = await apiClient.post<AdminAuthResponse>(
-    '/api/admin-auth/login',
-    { phone, code },
-  );
-
-  return response.data;
+  return fetchJsonPost<AdminAuthResponse>('/api/admin-auth/login', { phone, code });
 }
 
 export async function refreshAdminAuthToken(refreshToken: string): Promise<{

@@ -21,7 +21,7 @@ const MOCK_BOOKINGS = [
     time: '13:30 – 14:30',
     plate: 'C789K077',
     box: 'Бокс 4',
-    backgroundColor: '#E8E4FF',
+    backgroundColor: '#F9ECD2',
   },
   {
     id: '2',

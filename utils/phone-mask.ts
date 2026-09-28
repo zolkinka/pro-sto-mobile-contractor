@@ -50,3 +50,14 @@ export const toE164Phone = (value: string): string => {
   const numbers = getCleanPhone(value);
   return `+${numbers}`;
 };
+
+export const phonesMatch = (left: string, right: string): boolean => {
+  const a = getCleanPhone(left);
+  const b = getCleanPhone(right);
+
+  if (a.length < 10 || b.length < 10) {
+    return false;
+  }
+
+  return a.slice(-10) === b.slice(-10);
+};
