@@ -26,6 +26,16 @@ import { formatPhone, isValidPhone } from '@/utils/phone-mask';
 
 type PhoneScreenNavigation = NativeStackNavigationProp<AuthStackParamList, 'Phone'>;
 
+function readAuthStoreError(fallback: string): string {
+  try {
+    const value = authStore.error;
+
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export const PhoneScreen = observer(function PhoneScreen() {
   const navigation = useNavigation<PhoneScreenNavigation>();
   const insets = useSafeAreaInsets();
@@ -52,18 +62,32 @@ export const PhoneScreen = observer(function PhoneScreen() {
 
     if (success) {
       navigation.navigate('Code');
+      return;
     }
+
+    let alertMessage = readAuthStoreError('Не удалось отправить код. Попробуйте ещё раз');
+
+    if (__DEV__ && authStore.devErrorDetail) {
+      alertMessage += `\n\n— debug —\n${authStore.devErrorDetail}`;
+    }
+
+    Alert.alert('Ошибка', alertMessage);
   };
 
-  const isButtonDisabled = !isValidPhone(phone) || !agreedToTerms || authStore.isLoading;
+  const isButtonDisabled =
+    !isValidPhone(phone) || !agreedToTerms || authStore.isLoading;
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}
-        keyboardShouldPersistTaps="handled"
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
+        keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}>
         <View style={styles.mainContainer}>
           <View style={styles.logoContainer}>
@@ -125,15 +149,15 @@ export const PhoneScreen = observer(function PhoneScreen() {
             </View>
           </View>
         </View>
-      </ScrollView>
 
-      <View style={[styles.buttonContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <AppButton
-          label={authStore.isLoading ? 'Отправка...' : 'Поехали'}
-          onPress={handleSendCode}
-          disabled={isButtonDisabled}
-        />
-      </View>
+        <View style={styles.buttonContainer}>
+          <AppButton
+            label={authStore.isLoading ? 'Отправка...' : 'Поехали'}
+            onPress={handleSendCode}
+            disabled={isButtonDisabled}
+          />
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 });
@@ -142,6 +166,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.gray[50],
+  },
+  scroll: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -222,7 +249,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.gray[900],
   },
   buttonContainer: {
-    paddingHorizontal: 16,
+    marginTop: 'auto',
     paddingTop: 12,
     backgroundColor: theme.colors.gray[50],
   },

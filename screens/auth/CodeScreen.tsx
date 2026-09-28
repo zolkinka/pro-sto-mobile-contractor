@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -93,6 +94,9 @@ export const CodeScreen = observer(function CodeScreen() {
 
       if (!success) {
         setCode(['', '', '', '']);
+        if (authStore.error) {
+          Alert.alert('Ошибка', authStore.error);
+        }
         if (isIOS) {
           iosHiddenInputRef.current?.focus();
         } else {
@@ -184,6 +188,9 @@ export const CodeScreen = observer(function CodeScreen() {
     if (!success) {
       setCanResend(true);
       setTimer(0);
+      if (authStore.error) {
+        Alert.alert('Ошибка', authStore.error);
+      }
     }
   };
 
@@ -196,7 +203,7 @@ export const CodeScreen = observer(function CodeScreen() {
           styles.scrollContent,
           { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 },
         ]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         showsVerticalScrollIndicator={false}>
         <Pressable
           style={styles.backButton}

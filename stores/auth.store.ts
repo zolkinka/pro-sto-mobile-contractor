@@ -8,6 +8,7 @@ import {
   refreshAdminAuthToken,
   sendAdminAuthCode,
 } from '@/services/auth-api';
+import { probeApiHostReachability } from '@/services/fetch-json';
 import {
   getApiErrorMessage,
   isApiUnauthorizedError,
@@ -16,6 +17,7 @@ import {
 } from '@/services/api-client';
 import { TokenStorageService } from '@/services/token-storage.service';
 import type { StoredUser } from '@/types/auth';
+import { logApiErrorInDev } from '@/utils/api-error-debug';
 import { toE164Phone } from '@/utils/phone-mask';
 
 export class AuthStore {
@@ -26,6 +28,8 @@ export class AuthStore {
   isLoading = false;
   isInitialized = false;
   error: string | null = null;
+  /** Populated in __DEV__ when an API call fails (for alerts / lead debugging). */
+  devErrorDetail: string | null = null;
 
   private refreshTokenPromise: Promise<boolean> | null = null;
   private authInitPromise: Promise<void> | null = null;
@@ -147,24 +151,55 @@ export class AuthStore {
   }
 
   async sendCode(phone: string): Promise<boolean> {
-    this.isLoading = true;
-    this.error = null;
-
     try {
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+        this.devErrorDetail = null;
+      });
+
       const normalizedPhone = toE164Phone(phone);
       await sendAdminAuthCode(normalizedPhone);
-      await TokenStorageService.savePendingPhone(normalizedPhone);
 
       runInAction(() => {
         this.phone = normalizedPhone;
         this.isLoading = false;
       });
 
+      try {
+        await TokenStorageService.savePendingPhone(normalizedPhone);
+      } catch {
+        // SMS already sent — do not block the code screen if Keychain fails.
+      }
+
       return true;
-    } catch (error) {
+    } catch (thrown: unknown) {
+      let message = 'Произошла ошибка. Попробуйте ещё раз';
+
+      try {
+        message = getApiErrorMessage(thrown);
+      } catch {
+        // keep default message
+      }
+
+      let devDetail = logApiErrorInDev(thrown, 'admin-auth/send-code', {
+        method: 'POST',
+        path: '/api/admin-auth/send-code',
+      });
+
+      if (__DEV__) {
+        try {
+          const probe = await probeApiHostReachability();
+          devDetail = devDetail ? `${devDetail}\n${probe}` : probe;
+        } catch {
+          // ignore probe failures
+        }
+      }
+
       runInAction(() => {
         this.isLoading = false;
-        this.error = getApiErrorMessage(error);
+        this.error = message;
+        this.devErrorDetail = devDetail;
       });
       return false;
     }
@@ -172,14 +207,18 @@ export class AuthStore {
 
   async login(code: string): Promise<boolean> {
     if (!this.phone) {
-      this.error = 'Номер телефона не указан';
+      runInAction(() => {
+        this.error = 'Номер телефона не указан';
+      });
       return false;
     }
 
-    this.isLoading = true;
-    this.error = null;
-
     try {
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
+
       const response = await loginWithAdminAuthCode(this.phone, code);
       const mappedUser = mapAdminUserToStoredUser(response.user);
 
@@ -203,10 +242,18 @@ export class AuthStore {
       await TokenStorageService.clearPendingPhone();
 
       return true;
-    } catch (error) {
+    } catch (thrown: unknown) {
+      let message = 'Произошла ошибка. Попробуйте ещё раз';
+
+      try {
+        message = getApiErrorMessage(thrown);
+      } catch {
+        // keep default message
+      }
+
       runInAction(() => {
         this.isLoading = false;
-        this.error = getApiErrorMessage(error);
+        this.error = message;
       });
       return false;
     }
@@ -292,6 +339,7 @@ export class AuthStore {
 
   clearError(): void {
     this.error = null;
+    this.devErrorDetail = null;
   }
 
   get isAuthenticated(): boolean {

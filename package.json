@@ -7,6 +7,7 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "node scripts/patch-metro-keys.js && CI= react-native start",
+    "dev:api-proxy": "node scripts/dev-api-proxy.js",
     "test": "jest",
     "link-assets": "npx react-native-asset",
     "postinstall": "node scripts/patch-metro-keys.js && npm run link-assets"
@@ -14,6 +15,7 @@
   "dependencies": {
     "@miblanchard/react-native-slider": "^2.6.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-native-community/datetimepicker": "^8.6.0",
     "@react-native/new-app-screen": "0.81.4",
     "@react-navigation/native": "^7.3.13",
     "@react-navigation/native-stack": "^7.18.5",
@@ -29,6 +31,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "^15.15.5",
+    "react-native-vision-camera": "^4.7.2",
     "react-native-worklets": "^0.5.1"
   },
   "devDependencies": {
