@@ -1,3 +1,10 @@
+const envFile =
+  process.env.ENVFILE ||
+  (process.argv.includes('--dev') &&
+  process.argv[process.argv.indexOf('--dev') + 1] === 'false'
+    ? '.env.production'
+    : '.env');
+
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
@@ -15,7 +22,7 @@ module.exports = {
       'module:react-native-dotenv',
       {
         moduleName: '@env',
-        path: process.env.ENVFILE || '.env',
+        path: envFile,
         allowUndefined: true,
       },
     ],
