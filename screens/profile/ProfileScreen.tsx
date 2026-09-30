@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,8 +14,10 @@ import { AppText } from '@/components/ui/app-text';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { theme } from '@/constants/theme';
 import type { MainStackParamList } from '@/navigation/types';
+import { fetchServiceCenterName } from '@/services/service-center-api';
 import { authStore } from '@/stores/auth.store';
 import { formatPhone } from '@/utils/phone-mask';
+import { readServiceCenterUuid } from '@/utils/service-center-uuid';
 
 type Navigation = NativeStackNavigationProp<MainStackParamList, 'Profile'>;
 
@@ -25,6 +27,34 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const scrollBottomPadding = getBottomOverlayScrollPadding(insets.bottom, 56, 'floating');
   const phone = authStore.user?.phone || authStore.phone || '';
   const formattedPhone = phone ? formatPhone(phone) : '';
+  const serviceCenterUuid =
+    authStore.user?.serviceCenterUuid || readServiceCenterUuid(authStore.accessToken);
+  const [serviceName, setServiceName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!serviceCenterUuid) {
+      setServiceName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetchServiceCenterName(serviceCenterUuid)
+      .then((name) => {
+        if (!cancelled) {
+          setServiceName(name);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServiceName(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceCenterUuid]);
 
   const handleLogout = () => {
     Alert.alert('Выход из аккаунта', 'Вы уверены, что хотите выйти?', [
@@ -62,7 +92,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
           <View style={styles.phoneIcon}>
             <Icon name="user" size={20} color={theme.colors.gray[800]} />
           </View>
-          <AppText style={styles.phoneText}>{formattedPhone}</AppText>
+          <View style={styles.phoneTextBlock}>
+            <AppText style={styles.phoneText}>{formattedPhone}</AppText>
+            {serviceName ? <AppText style={styles.serviceName}>{serviceName}</AppText> : null}
+          </View>
         </View>
 
         <View style={styles.menuSection}>
@@ -150,10 +183,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  phoneTextBlock: {
+    flex: 1,
+    gap: 2,
+  },
   phoneText: {
     fontSize: 14,
     lineHeight: 16.8,
     color: theme.colors.gray[700],
+  },
+  serviceName: {
+    fontSize: 14,
+    lineHeight: 16.8,
+    color: theme.colors.gray[800],
   },
   menuSection: {
     gap: 16,

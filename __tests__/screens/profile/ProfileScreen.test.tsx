@@ -21,12 +21,17 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
 }));
 
+jest.mock('@/services/service-center-api', () => ({
+  fetchServiceCenterName: jest.fn(async () => 'Шинка'),
+}));
+
 jest.mock('@/stores/auth.store', () => ({
   authStore: {
     user: {
       phone: '+79991234567',
       email: 'admin@example.com',
       name: 'Admin',
+      serviceCenterUuid: 'sc-1',
     },
     phone: '+79991234567',
     logout: jest.fn(async () => undefined),
@@ -46,6 +51,7 @@ describe('ProfileScreen', () => {
     });
 
     expect(JSON.stringify(tree!.toJSON())).toContain('+7 (999) 123-45-67');
+    expect(JSON.stringify(tree!.toJSON())).toContain('Шинка');
   });
 
   it('logs out after confirmation', async () => {
