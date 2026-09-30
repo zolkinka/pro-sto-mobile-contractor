@@ -1,0 +1,63 @@
+name: EAS Build iOS (TestFlight)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      auto_submit:
+        description: Submit the build to TestFlight after it finishes
+        type: boolean
+        default: true
+      message:
+        description: Optional note shown in the workflow log
+        type: string
+        required: false
+
+concurrency:
+  group: eas-ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build iOS testflight
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check TestFlight API host
+        run: grep -q '^API_BASE_URL=https://dev.prosto-app.ru$' .env.production
+
+      - name: Build iOS
+        env:
+          BUILD_NOTE: ${{ github.event.inputs.message }}
+          AUTO_SUBMIT: ${{ github.event_name == 'push' && 'true' || github.event.inputs.auto_submit }}
+        run: |
+          if [ -n "$BUILD_NOTE" ]; then
+            echo "Note: $BUILD_NOTE"
+          fi
+
+          SUBMIT_ARGS=()
+          if [ "$AUTO_SUBMIT" = "true" ]; then
+            SUBMIT_ARGS+=(--auto-submit-with-profile testflight)
+          fi
+
+          eas build --platform ios --profile testflight --non-interactive --no-wait "${SUBMIT_ARGS[@]}"

@@ -1,4 +1,23 @@
 {
   "name": "ProStoMobileContractors",
-  "displayName": "Pro-Sto Contractors"
+  "displayName": "Pro-Sto Contractors",
+  "expo": {
+    "name": "Pro-Sto Contractors",
+    "slug": "pro-sto-mobile-contractor",
+    "owner": "zolkinka",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": {
+      "bundleIdentifier": "ru.prosto-app.mobile-contractor",
+      "appleTeamId": "5PSZ2GC9U9"
+    },
+    "android": {
+      "package": "com.prostomobilecontractors"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a708643f-77dd-414f-a77b-cd1e41b7257a"
+      }
+    }
+  }
 }

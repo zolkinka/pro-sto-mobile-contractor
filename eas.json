@@ -1,0 +1,27 @@
+{
+  "cli": {
+    "version": ">= 16.6.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "testflight": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "node": "22.13.0",
+      "env": {
+        "ENVFILE": ".env.production",
+        "API_BASE_URL": "https://dev.prosto-app.ru"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    }
+  },
+  "submit": {
+    "testflight": {
+      "ios": {
+        "appleTeamId": "5PSZ2GC9U9"
+      }
+    }
+  }
+}
