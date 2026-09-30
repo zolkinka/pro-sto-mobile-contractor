@@ -59,7 +59,8 @@ export function MainStack() {
         name="BookingConfirmed"
         component={BookingConfirmedScreen}
         options={{
-          animation: 'slide_from_bottom',
+          presentation: 'transparentModal',
+          animation: 'none',
           gestureEnabled: false,
           contentStyle: { backgroundColor: 'transparent' },
         }}

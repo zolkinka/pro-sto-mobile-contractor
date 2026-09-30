@@ -11,6 +11,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { Icon } from '@/components/ui/icon';
 import { theme } from '@/constants/theme';
+import { showBookingConfirmed } from '@/navigation/show-booking-confirmed';
 import type { MainStackParamList } from '@/navigation/types';
 import { bookingsStore } from '@/stores/bookings.store';
 import { permissionsStore } from '@/stores/permissions.store';
@@ -81,7 +82,7 @@ export function QrScanScreen() {
 
   const finishConfirmed = (uuid: string) => {
     resetScanSession(confirmingRef, blockedScanRef, setIsConfirming);
-    navigation.navigate('BookingConfirmed', { bookingUuid: uuid });
+    showBookingConfirmed(navigation, uuid);
   };
 
   const handleCodeScanned = async (raw: string) => {

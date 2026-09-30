@@ -37,7 +37,9 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
   useFocusEffect(
     useCallback(() => {
       bookingsStore.setServiceCenterUuid(authStore.user?.serviceCenterUuid ?? null);
-      bookingsStore.fetchBookings().catch(() => undefined);
+      bookingsStore
+        .fetchBookings({ silent: bookingsStore.bookings.length > 0 })
+        .catch(() => undefined);
     }, []),
   );
 

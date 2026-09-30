@@ -1,4 +1,4 @@
-import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
@@ -8,15 +8,14 @@ import {
   PanResponder,
   type PanResponderGestureState,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,7 +38,8 @@ type Navigation = NativeStackNavigationProp<MainStackParamList, 'BookingConfirme
 type BookingConfirmedRoute = RouteProp<MainStackParamList, 'BookingConfirmed'>;
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const TOP_GAP = Math.round(SCREEN_HEIGHT * 0.14);
+const SHEET_OPEN_MS = 280;
+const SHEET_EASING = Easing.out(Easing.cubic);
 const SWIPE_CLOSE_DISTANCE = 100;
 const SWIPE_CLOSE_VELOCITY = 500;
 const SUCCESS_GREEN = '#22C55E';
@@ -73,12 +73,12 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
   }, []);
 
   const goHome = useCallback(() => {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      }),
-    );
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('Home');
   }, [navigation]);
 
   const closeSheet = useCallback(() => {
@@ -87,14 +87,14 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
     }
 
     closingRef.current = true;
-    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 220 }, () => {
+    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 220, easing: SHEET_EASING }, () => {
       runOnJS(goHome)();
     });
     backdropOpacity.value = withTiming(0, { duration: 180 });
   }, [backdropOpacity, goHome, translateY]);
 
   useEffect(() => {
-    translateY.value = withSpring(0, { damping: 22, stiffness: 220 });
+    translateY.value = withTiming(0, { duration: SHEET_OPEN_MS, easing: SHEET_EASING });
     backdropOpacity.value = withTiming(1, { duration: 220 });
   }, [backdropOpacity, translateY]);
 
@@ -124,7 +124,7 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
         return;
       }
 
-      translateY.value = withSpring(0);
+      translateY.value = withTiming(0, { duration: 180, easing: SHEET_EASING });
     },
     [closeSheet, translateY],
   );
@@ -143,7 +143,7 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
           handleDragRelease(gestureState);
         },
         onPanResponderTerminate: () => {
-          translateY.value = withSpring(0);
+          translateY.value = withTiming(0, { duration: 180, easing: SHEET_EASING });
         },
       }),
     [handleDragRelease, translateY],
@@ -173,13 +173,7 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
           <View style={styles.handle} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: Math.max(insets.bottom, 16) + 16 },
-          ]}
-          showsVerticalScrollIndicator={false}
-          bounces={false}>
+        <View style={[styles.content, { paddingBottom: insets.bottom + 12 }]}>
           <AppText weight="semiBold" style={styles.title}>
             Запись подтверждена!
           </AppText>
@@ -241,7 +235,7 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
               Добавить в календарь
             </AppText>
           </Pressable>
-        </ScrollView>
+        </View>
 
         <AppToast
           visible={soonVisible}
@@ -264,7 +258,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(48, 47, 45, 0.28)',
   },
   sheet: {
-    height: SCREEN_HEIGHT - TOP_GAP,
     backgroundColor: theme.colors.gray[50],
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,

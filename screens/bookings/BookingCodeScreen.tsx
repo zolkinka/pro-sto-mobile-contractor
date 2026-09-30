@@ -9,6 +9,7 @@ import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { Icon } from '@/components/ui/icon';
 import { theme } from '@/constants/theme';
+import { showBookingConfirmed } from '@/navigation/show-booking-confirmed';
 import type { MainStackParamList } from '@/navigation/types';
 import { bookingsStore } from '@/stores/bookings.store';
 import { isConfirmationCode } from '@/utils/booking-qr-payload';
@@ -47,7 +48,7 @@ export function BookingCodeScreen() {
     const result = await bookingsStore.confirmBooking(bookingUuid, code);
 
     if (result.ok) {
-      navigation.navigate('BookingConfirmed', { bookingUuid });
+      showBookingConfirmed(navigation, bookingUuid);
       return;
     }
 

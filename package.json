@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "start": "node scripts/patch-metro-keys.js && CI= react-native start",
     "dev:api-proxy": "node scripts/dev-api-proxy.js",
+    "booking:qr": "node scripts/create-booking-qr.js",
     "test": "jest",
     "link-assets": "npx react-native-asset",
     "postinstall": "node scripts/patch-metro-keys.js && npm run link-assets"
