@@ -6,6 +6,12 @@
     "slug": "pro-sto-mobile-contractor",
     "owner": "zolkinka",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a708643f-77dd-414f-a77b-cd1e41b7257a"
+    },
     "orientation": "portrait",
     "ios": {
       "bundleIdentifier": "ru.prosto-app.mobile-contractor",

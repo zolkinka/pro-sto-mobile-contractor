@@ -49,6 +49,9 @@ pnpm-debug.log*
 .env*.local
 *.pem
 
+# expo
+.expo/
+
 # typescript
 *.tsbuildinfo
 

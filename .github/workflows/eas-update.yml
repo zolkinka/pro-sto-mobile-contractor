@@ -1,0 +1,60 @@
+name: EAS Update (TestFlight)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      message:
+        description: Update message
+        type: string
+        required: false
+
+concurrency:
+  group: eas-update-testflight
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Publish OTA to testflight
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check TestFlight API host
+        run: grep -q '^API_BASE_URL=https://dev.prosto-app.ru$' .env.production
+
+      - name: Publish EAS Update
+        env:
+          INPUT_MESSAGE: ${{ github.event.inputs.message }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          ENVFILE: .env.production
+          API_BASE_URL: https://dev.prosto-app.ru
+        run: |
+          if [ -n "$INPUT_MESSAGE" ]; then
+            MESSAGE="$INPUT_MESSAGE"
+          elif [ -n "$COMMIT_MESSAGE" ]; then
+            MESSAGE=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1 | cut -c1-100)
+          else
+            MESSAGE="${GITHUB_SHA}"
+          fi
+
+          eas update --channel testflight --non-interactive --message "$MESSAGE"

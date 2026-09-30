@@ -1,9 +1,6 @@
 name: EAS Build iOS (TestFlight)
 
 on:
-  push:
-    branches:
-      - develop
   workflow_dispatch:
     inputs:
       auto_submit:
@@ -49,7 +46,7 @@ jobs:
       - name: Build iOS
         env:
           BUILD_NOTE: ${{ github.event.inputs.message }}
-          AUTO_SUBMIT: ${{ github.event_name == 'push' && 'true' || github.event.inputs.auto_submit }}
+          AUTO_SUBMIT: ${{ github.event.inputs.auto_submit }}
         run: |
           if [ -n "$BUILD_NOTE" ]; then
             echo "Note: $BUILD_NOTE"

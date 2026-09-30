@@ -6,6 +6,7 @@
   "build": {
     "testflight": {
       "distribution": "store",
+      "channel": "testflight",
       "autoIncrement": true,
       "node": "22.13.0",
       "env": {
