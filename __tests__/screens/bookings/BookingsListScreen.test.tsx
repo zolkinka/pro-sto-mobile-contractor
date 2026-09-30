@@ -120,4 +120,20 @@ describe('BookingsListScreen', () => {
 
     expect(JSON.stringify(tree!.toJSON())).toContain('Toyota Land Cruiser Prado');
   });
+
+  it('opens profile from the bottom bar', async () => {
+    let tree: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(<BookingsListScreen />);
+    });
+
+    const profileTab = tree!.root.findByProps({ accessibilityLabel: 'Профиль' });
+
+    await ReactTestRenderer.act(async () => {
+      profileTab.props.onPress();
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('Profile');
+  });
 });

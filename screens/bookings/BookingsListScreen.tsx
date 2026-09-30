@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -68,11 +68,11 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
     }
 
     if (tab === 'qr') {
-      navigation.navigate('QrScan', {});
+      navigation.navigate('QrScan', { fromMenu: true });
       return;
     }
 
-    Alert.alert(UI_STATE_LABELS.comingSoonTitle, UI_STATE_LABELS.profileComingSoonMessage);
+    navigation.navigate('Profile');
   };
 
   const dateLabel = formatBookingDayLabel(bookingsStore.selectedDate);

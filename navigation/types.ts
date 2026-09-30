@@ -10,12 +10,17 @@ export type PermissionStackParamList = {
 
 export type MainStackParamList = {
   Home: undefined;
+  Profile: undefined;
+  Support: undefined;
+  ContactSupport: undefined;
+  NotificationSettings: undefined;
   OrderDetails: {
     bookingUuid: string;
     postOrderNumber?: number | null;
   };
   QrScan: {
     bookingUuid?: string;
+    fromMenu?: boolean;
   };
   BookingCode: {
     bookingUuid?: string;

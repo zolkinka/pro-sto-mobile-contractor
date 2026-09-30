@@ -30,6 +30,12 @@ const TABS: TabConfig[] = [
   { id: 'qr', icon: 'qr-code-outline' },
 ];
 
+const TAB_LABELS: Record<MainBottomTab, string> = {
+  profile: 'Профиль',
+  bookings: 'Записи',
+  qr: 'Сканер QR',
+};
+
 const BAR_WIDTH = 198;
 const BAR_HEIGHT = 56;
 const BAR_PADDING_H = 35;
@@ -88,6 +94,7 @@ function BottomTabButton({
       onPress={() => onPress(tab.id)}
       style={styles.bottomButton}
       accessibilityRole="button"
+      accessibilityLabel={TAB_LABELS[tab.id]}
       accessibilityState={{ selected: isSelected }}>
       <Animated.View style={iconStyle}>
         <Icon name={tab.icon} size={TAB_ICON_SIZE} color={theme.colors.gray[50]} />
@@ -121,8 +128,6 @@ export function MainBottomBar({
   }));
 
   const handlePress = (tab: MainBottomTab) => {
-    setSelectedTab(tab);
-    activeIndex.value = withTiming(getTabIndex(tab), ANIMATION_CONFIG);
     onTabPress?.(tab);
   };
 
