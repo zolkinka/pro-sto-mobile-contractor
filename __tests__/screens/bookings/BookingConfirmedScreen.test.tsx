@@ -66,7 +66,7 @@ describe('BookingConfirmedScreen', () => {
     bookingsStore.selectedBooking = null;
   });
 
-  it('shows address, reminder chips and an inactive calendar action', async () => {
+  it('shows the confirmation summary and an inactive calendar action', async () => {
     let tree: ReactTestRenderer.ReactTestRenderer;
 
     await ReactTestRenderer.act(async () => {
@@ -79,16 +79,14 @@ describe('BookingConfirmedScreen', () => {
     expect(serialized).toContain('шиномонтаж Шинка');
     expect(serialized).toContain('по адресу 6-я линия Васильевского острова, 59');
     expect(serialized).toContain('4000₽');
-    expect(serialized).toContain('Напомнить в SMS за:');
-    expect(serialized).toContain('2 часа');
-    expect(serialized).toContain('2 дня');
+    expect(serialized).not.toContain('Напомнить в SMS за:');
     expect(serialized).toContain('Добавить в календарь');
     expect(serialized).not.toContain('Скоро');
 
-    const chip = tree!.root.findByProps({ accessibilityLabel: '2 часа' });
+    const calendar = tree!.root.findByProps({ accessibilityLabel: 'Добавить в календарь' });
 
     await ReactTestRenderer.act(async () => {
-      chip.props.onPress();
+      calendar.props.onPress();
     });
 
     expect(JSON.stringify(tree!.toJSON())).toContain('Скоро');

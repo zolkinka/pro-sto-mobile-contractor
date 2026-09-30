@@ -61,6 +61,7 @@ export function MainStack() {
         options={{
           presentation: 'transparentModal',
           animation: 'none',
+          animationDuration: 0,
           gestureEnabled: false,
           contentStyle: { backgroundColor: 'transparent' },
         }}

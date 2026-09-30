@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
+  type LayoutChangeEvent,
   PanResponder,
   type PanResponderGestureState,
   Pressable,
@@ -16,6 +17,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,7 +48,6 @@ const SUCCESS_GREEN = '#22C55E';
 const PRICE_GREEN = '#16A34A';
 const CALENDAR_BLUE = theme.colors.accent.secondary;
 
-const REMINDER_CHIPS = ['2 часа', '4 часа', '8 часов', '1 день', '2 дня'];
 const COMING_SOON = 'Скоро';
 
 export const BookingConfirmedScreen = observer(function BookingConfirmedScreen() {
@@ -55,6 +56,8 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
   const insets = useSafeAreaInsets();
   const bookingUuid = route.params.bookingUuid;
   const closingRef = useRef(false);
+  const openedRef = useRef(false);
+  const sheetHeightRef = useRef(SCREEN_HEIGHT);
   const [remoteBooking, setRemoteBooking] = useState<BookingDetails | null>(null);
   const [soonVisible, setSoonVisible] = useState(false);
 
@@ -87,16 +90,35 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
     }
 
     closingRef.current = true;
-    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 220, easing: SHEET_EASING }, () => {
+    translateY.value = withTiming(sheetHeightRef.current, { duration: 220, easing: SHEET_EASING }, () => {
       runOnJS(goHome)();
     });
     backdropOpacity.value = withTiming(0, { duration: 180 });
   }, [backdropOpacity, goHome, translateY]);
 
-  useEffect(() => {
-    translateY.value = withTiming(0, { duration: SHEET_OPEN_MS, easing: SHEET_EASING });
-    backdropOpacity.value = withTiming(1, { duration: 220 });
-  }, [backdropOpacity, translateY]);
+  const handleSheetLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const height = event.nativeEvent.layout.height;
+
+      if (height <= 0) {
+        return;
+      }
+
+      sheetHeightRef.current = height;
+
+      if (openedRef.current) {
+        return;
+      }
+
+      openedRef.current = true;
+      translateY.value = withSequence(
+        withTiming(height, { duration: 0 }),
+        withTiming(0, { duration: SHEET_OPEN_MS, easing: SHEET_EASING }),
+      );
+      backdropOpacity.value = withTiming(1, { duration: 220 });
+    },
+    [backdropOpacity, translateY],
+  );
 
   useEffect(() => {
     let active = true;
@@ -168,7 +190,10 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
         <Animated.View style={[styles.backdrop, backdropStyle]} />
       </Pressable>
 
-      <Animated.View style={[styles.sheet, sheetStyle]} {...panResponder.panHandlers}>
+      <Animated.View
+        onLayout={handleSheetLayout}
+        style={[styles.sheet, sheetStyle]}
+        {...panResponder.panHandlers}>
         <View style={styles.handleHeader}>
           <View style={styles.handle} />
         </View>
@@ -201,30 +226,6 @@ export const BookingConfirmedScreen = observer(function BookingConfirmedScreen()
             style={styles.homeButton}
           />
 
-          <View style={styles.remindBlock}>
-            <View style={styles.remindLabel}>
-              <Icon name="notification" size={16} color={theme.colors.gray[800]} />
-              <AppText weight="regular" style={styles.remindText}>
-                Напомнить в SMS за:
-              </AppText>
-            </View>
-
-            <View style={styles.chips}>
-              {REMINDER_CHIPS.map((label) => (
-                <Pressable
-                  key={label}
-                  accessibilityRole="button"
-                  accessibilityLabel={label}
-                  onPress={showComingSoon}
-                  style={styles.chip}>
-                  <AppText weight="regular" style={styles.chipText}>
-                    {label}
-                  </AppText>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Добавить в календарь"
@@ -251,13 +252,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: 'transparent',
-    justifyContent: 'flex-end',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(48, 47, 45, 0.28)',
   },
   sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: theme.colors.gray[50],
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -323,39 +327,6 @@ const styles = StyleSheet.create({
     width: 220,
     height: 52,
     borderRadius: 26,
-  },
-  remindBlock: {
-    marginTop: 28,
-    alignItems: 'center',
-    alignSelf: 'stretch',
-  },
-  remindLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  remindText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: theme.colors.gray[900],
-  },
-  chips: {
-    marginTop: 12,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    backgroundColor: '#F4F3F0',
-  },
-  chipText: {
-    fontSize: 14,
-    lineHeight: 17,
-    color: theme.colors.gray[800],
   },
   calendarButton: {
     marginTop: 20,
