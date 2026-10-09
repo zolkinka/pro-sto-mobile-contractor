@@ -24,6 +24,7 @@ export type MainStackParamList = {
   };
   BookingCode: {
     bookingUuid?: string;
+    fromMenu?: boolean;
   };
   BookingConfirmed: {
     bookingUuid: string;

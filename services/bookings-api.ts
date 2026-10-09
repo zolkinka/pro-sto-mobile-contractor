@@ -27,7 +27,7 @@ function buildBookingsListQuery(params: FetchBookingsListParams) {
     ...(params.serviceCenterUuid ? { service_center_uuid: params.serviceCenterUuid } : {}),
     ...(params.dateFrom ? { date_from: params.dateFrom } : {}),
     ...(params.dateTo ? { date_to: params.dateTo } : {}),
-    status: params.status,
+    ...(params.status?.length ? { status: params.status } : {}),
     limit: params.limit ?? 100,
     offset: params.offset ?? 0,
   };

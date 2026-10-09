@@ -1,6 +1,10 @@
 import axios, { type AxiosError } from 'axios';
 
-import { getBookingConfirmErrorMessage, getQrScanErrorMessage } from '@/utils/booking-confirm-error';
+import {
+  getBookingConfirmErrorMessage,
+  getBookingConfirmFailure,
+  getQrScanErrorMessage,
+} from '@/utils/booking-confirm-error';
 import { isConfirmationCode, parseBookingQrPayload } from '@/utils/booking-qr-payload';
 
 describe('booking-qr-payload', () => {
@@ -64,5 +68,78 @@ describe('booking-confirm-error', () => {
     } as AxiosError['response'];
 
     expect(getBookingConfirmErrorMessage(error)).toBe('Превышен лимит попыток ввода кода');
+  });
+
+  it('returns support email separately when code entry is blocked', () => {
+    const error = new axios.AxiosError('locked');
+    error.response = {
+      status: 429,
+      data: {
+        error: {
+          code: 'CONFIRMATION_ATTEMPTS_EXCEEDED',
+          message:
+            'Превышен лимит попыток ввода кода. Восстановить доступ можно через техническую поддержку',
+          details: [
+            {
+              remaining_attempts: 0,
+              blocked: true,
+              support_email: 'support@example.com',
+            },
+          ],
+        },
+      },
+      statusText: 'Too Many Requests',
+      headers: {},
+      config: { headers: {} },
+    } as AxiosError['response'];
+
+    expect(getBookingConfirmFailure(error)).toEqual({
+      message:
+        'Превышен лимит попыток ввода кода. Восстановить доступ можно через техническую поддержку',
+      blocked: true,
+      supportEmail: 'support@example.com',
+    });
+    expect(getBookingConfirmErrorMessage(error)).toBe(
+      'Превышен лимит попыток ввода кода. Восстановить доступ можно через техническую поддержку',
+    );
+  });
+
+  it('does not lock confirmation on a bare 429 rate limit', () => {
+    const error = new axios.AxiosError('limited');
+    error.response = {
+      status: 429,
+      data: { message: 'Too Many Requests' },
+      statusText: 'Too Many Requests',
+      headers: {},
+      config: { headers: {} },
+    } as AxiosError['response'];
+
+    expect(getBookingConfirmFailure(error)).toEqual({
+      message: 'Too Many Requests',
+      blocked: false,
+    });
+  });
+
+  it('locks confirmation when details mark the booking as blocked', () => {
+    const error = new axios.AxiosError('locked');
+    error.response = {
+      status: 400,
+      data: {
+        error: {
+          code: 'INVALID_CONFIRMATION_CODE',
+          message: 'Превышен лимит попыток ввода кода',
+          details: [{ blocked: true }],
+        },
+      },
+      statusText: 'Bad Request',
+      headers: {},
+      config: { headers: {} },
+    } as AxiosError['response'];
+
+    expect(getBookingConfirmFailure(error)).toEqual({
+      message: 'Превышен лимит попыток ввода кода',
+      blocked: true,
+      supportEmail: null,
+    });
   });
 });

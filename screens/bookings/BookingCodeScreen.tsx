@@ -1,10 +1,12 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
+import { observer } from 'mobx-react-lite';
 import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BookingConfirmLockoutHint } from '@/components/bookings/booking-confirm-lockout-hint';
 import { AppButton } from '@/components/ui/app-button';
 import { AppText } from '@/components/ui/app-text';
 import { Icon } from '@/components/ui/icon';
@@ -21,18 +23,21 @@ const CODE_LENGTH = 4;
 const ERROR_COLOR = '#D8182E';
 const MISSING_BOOKING_MESSAGE = 'Откройте карточку записи, чтобы ввести код';
 
-export function BookingCodeScreen() {
+export const BookingCodeScreen = observer(function BookingCodeScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<BookingCodeRoute>();
   const bookingUuid = route.params?.bookingUuid;
+  const storedLockout = bookingsStore.getConfirmationLockout(bookingUuid);
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const inputsRef = useRef<Array<TextInput | null>>([]);
   const submittingRef = useRef(false);
+  const isBlocked = Boolean(storedLockout);
+  const displayError = errorMessage ?? storedLockout?.message ?? null;
 
   const submitCode = async (code: string) => {
-    if (!isConfirmationCode(code) || submittingRef.current) {
+    if (!isConfirmationCode(code) || submittingRef.current || isBlocked) {
       return;
     }
 
@@ -44,7 +49,6 @@ export function BookingCodeScreen() {
     submittingRef.current = true;
     setIsSubmitting(true);
     setErrorMessage(null);
-
     const result = await bookingsStore.confirmBooking(bookingUuid, code);
 
     if (result.ok) {
@@ -55,6 +59,11 @@ export function BookingCodeScreen() {
     submittingRef.current = false;
     setIsSubmitting(false);
     setErrorMessage(result.message);
+
+    if (result.blocked) {
+      return;
+    }
+
     setDigits(Array(CODE_LENGTH).fill(''));
     inputsRef.current[0]?.focus();
   };
@@ -113,29 +122,39 @@ export function BookingCodeScreen() {
               onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
               keyboardType="number-pad"
               maxLength={1}
-              editable={!isSubmitting}
-              style={[styles.input, errorMessage ? styles.inputError : null]}
+              editable={!isSubmitting && !isBlocked}
+              style={[styles.input, displayError ? styles.inputError : null]}
               accessibilityLabel={`Цифра ${index + 1}`}
             />
           ))}
         </View>
 
-        {errorMessage ? (
-          <AppText weight="regular" style={styles.error}>
-            {errorMessage}
-          </AppText>
+        {displayError ? (
+          <View style={styles.errorBlock}>
+            <AppText weight="regular" style={styles.error}>
+              {displayError}
+            </AppText>
+            {isBlocked ? <BookingConfirmLockoutHint /> : null}
+          </View>
         ) : null}
       </View>
 
-      <AppButton
-        label="Подтвердить через QR"
-        variant="secondary"
-        onPress={() => navigation.navigate('QrScan', { bookingUuid })}
-        style={styles.qrButton}
-      />
+      {isBlocked ? null : (
+        <AppButton
+          label="Подтвердить через QR"
+          variant="secondary"
+          onPress={() =>
+            navigation.replace('QrScan', {
+              bookingUuid,
+              fromMenu: route.params?.fromMenu,
+            })
+          }
+          style={styles.qrButton}
+        />
+      )}
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -190,6 +209,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: ERROR_COLOR,
+  },
+  errorBlock: {
+    gap: 12,
+    alignItems: 'center',
   },
   error: {
     fontSize: 15,

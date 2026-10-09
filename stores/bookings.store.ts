@@ -23,7 +23,9 @@ import {
   getDayRangeIso,
   startOfDay,
 } from '@/utils/booking-date';
-import { getBookingConfirmErrorMessage } from '@/utils/booking-confirm-error';
+import { getApiErrorMessage } from '@/services/api-client';
+import { getBookingConfirmFailure } from '@/utils/booking-confirm-error';
+import { logApiErrorInDev } from '@/utils/api-error-debug';
 import { parseClientComment, getBookingServiceItems } from '@/utils/booking-format';
 
 export class BookingsStore {
@@ -39,7 +41,13 @@ export class BookingsStore {
   isLoadingServices = false;
 
   error: string | null = null;
+  /** Populated in __DEV__ when list loading fails (Metro / on-screen debugging). */
+  devErrorDetail: string | null = null;
   nearestBookingDate: Date | null = null;
+  confirmationLockouts: Record<
+    string,
+    { message: string; supportEmail?: string | null }
+  > = {};
 
   total = 0;
   limit = 100;
@@ -49,6 +57,7 @@ export class BookingsStore {
   private servicesCatalogLoaded = false;
   private listRequestId = 0;
   private detailsRequestId = 0;
+  private listFetchInFlight = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -67,8 +76,13 @@ export class BookingsStore {
     });
   }
 
+  /** Day schedule matches the web calendar: cancelled visits are not shown. */
+  get scheduleBookings(): BookingListItem[] {
+    return this.sortedBookings.filter((booking) => booking.status !== 'cancelled');
+  }
+
   get pendingBookings(): BookingListItem[] {
-    return this.sortedBookings.filter((booking) => booking.status === 'pending_confirmation');
+    return this.scheduleBookings.filter((booking) => booking.status === 'pending_confirmation');
   }
 
   get selectedBookingView(): BookingDetailsView | null {
@@ -127,15 +141,56 @@ export class BookingsStore {
     this.fetchBookings().catch(() => undefined);
   }
 
+  isConfirmationBlocked(uuid: string | undefined | null): boolean {
+    return Boolean(uuid && this.confirmationLockouts[uuid]);
+  }
+
+  getConfirmationLockout(
+    uuid: string | undefined | null,
+  ): { message: string; supportEmail?: string | null } | null {
+    if (!uuid) {
+      return null;
+    }
+
+    return this.confirmationLockouts[uuid] ?? null;
+  }
+
+  markConfirmationBlocked(
+    uuid: string,
+    message: string,
+    supportEmail?: string | null,
+  ): void {
+    this.confirmationLockouts = {
+      ...this.confirmationLockouts,
+      [uuid]: { message, supportEmail: supportEmail ?? null },
+    };
+  }
+
+  clearConfirmationLockout(uuid: string): void {
+    if (!this.confirmationLockouts[uuid]) {
+      return;
+    }
+
+    const next = { ...this.confirmationLockouts };
+    delete next[uuid];
+    this.confirmationLockouts = next;
+  }
+
+  private hasVisibleScheduleBookings(items: BookingListItem[]): boolean {
+    return items.some((booking) => booking.status !== 'cancelled');
+  }
+
   private findNearestBookingDate(items: BookingListItem[]): Date | null {
-    if (items.length === 0) {
+    const visibleItems = items.filter((item) => item.status !== 'cancelled');
+
+    if (visibleItems.length === 0) {
       return null;
     }
 
     const anchor = startOfDay(this.selectedDate).getTime();
     const uniqueDayTimestamps = new Set<number>();
 
-    for (const item of items) {
+    for (const item of visibleItems) {
       uniqueDayTimestamps.add(startOfDay(new Date(item.start_time)).getTime());
     }
 
@@ -171,21 +226,33 @@ export class BookingsStore {
       ...dayRange,
     });
 
-    if (dayResponse.total > 0) {
+    if (this.hasVisibleScheduleBookings(dayResponse.data)) {
+      runInAction(() => {
+        this.nearestBookingDate = null;
+      });
+
       return {
         data: dayResponse.data,
         total: dayResponse.total,
       };
     }
 
-    const discoveryResponse = await fetchBookingsListFlexible({
-      ...listParams,
-      limit: 200,
-    });
+    try {
+      const discoveryResponse = await fetchBookingsListFlexible({
+        ...listParams,
+        limit: 200,
+      });
 
-    runInAction(() => {
-      this.nearestBookingDate = this.findNearestBookingDate(discoveryResponse.data);
-    });
+      runInAction(() => {
+        this.nearestBookingDate = this.findNearestBookingDate(discoveryResponse.data);
+      });
+    } catch (error) {
+      console.warn('[BookingsStore] nearest booking discovery failed:', error);
+
+      runInAction(() => {
+        this.nearestBookingDate = null;
+      });
+    }
 
     return {
       data: [],
@@ -195,12 +262,19 @@ export class BookingsStore {
 
   async fetchBookings(options?: { silent?: boolean }): Promise<void> {
     const silent = options?.silent ?? false;
+
+    if (silent && this.listFetchInFlight) {
+      return;
+    }
+
     const requestId = ++this.listRequestId;
+    this.listFetchInFlight = true;
 
     if (!silent) {
       this.isLoadingList = true;
+      this.error = null;
+      this.devErrorDetail = null;
     }
-    this.error = null;
 
     try {
       const response = await this.loadBookingsForSelectedDay();
@@ -213,8 +287,14 @@ export class BookingsStore {
         this.bookings = response.data;
         this.total = response.total;
         this.isLoadingList = false;
+        this.error = null;
+        this.devErrorDetail = null;
       });
     } catch (error) {
+      const devDetail = logApiErrorInDev(error, 'bookings/list', {
+        method: 'GET',
+        path: '/api/master/bookings',
+      });
       console.warn('[BookingsStore] fetchBookings failed:', error);
 
       if (requestId !== this.listRequestId) {
@@ -222,9 +302,18 @@ export class BookingsStore {
       }
 
       runInAction(() => {
-        this.error = 'Не удалось загрузить список записей';
         this.isLoadingList = false;
+        if (!silent) {
+          this.error = getApiErrorMessage(error);
+          this.devErrorDetail = devDetail;
+        }
       });
+    } finally {
+      if (requestId === this.listRequestId) {
+        runInAction(() => {
+          this.listFetchInFlight = false;
+        });
+      }
     }
   }
 
@@ -316,12 +405,15 @@ export class BookingsStore {
 
   clearError(): void {
     this.error = null;
+    this.devErrorDetail = null;
   }
 
   async confirmBooking(
     uuid: string,
     code: string,
-  ): Promise<{ ok: true } | { ok: false; message: string }> {
+  ): Promise<
+    { ok: true } | { ok: false; message: string; blocked: boolean; supportEmail?: string | null }
+  > {
     try {
       const result = await confirmBookingByCode(uuid, code);
 
@@ -339,11 +431,21 @@ export class BookingsStore {
             status,
           };
         }
+
+        this.clearConfirmationLockout(uuid);
       });
 
       return { ok: true };
     } catch (error) {
-      return { ok: false, message: getBookingConfirmErrorMessage(error) };
+      const failure = getBookingConfirmFailure(error);
+
+      if (failure.blocked) {
+        runInAction(() => {
+          this.markConfirmationBlocked(uuid, failure.message, failure.supportEmail);
+        });
+      }
+
+      return { ok: false, ...failure };
     }
   }
 }

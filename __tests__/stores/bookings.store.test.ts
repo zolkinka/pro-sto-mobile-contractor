@@ -1,3 +1,5 @@
+import axios, { type AxiosError } from 'axios';
+
 import { BookingsStore } from '@/stores/bookings.store';
 
 const mockListItem = {
@@ -172,6 +174,17 @@ describe('BookingsStore', () => {
     expect(store.pendingBookings).toHaveLength(1);
   });
 
+  it('hides cancelled bookings from the day schedule', () => {
+    const store = new BookingsStore();
+    store.bookings = [
+      { ...mockListItem, uuid: 'cancelled-1', status: 'cancelled' },
+      { ...mockListItem, uuid: 'pending-1', status: 'pending_confirmation' },
+      { ...mockListItem, uuid: 'done-1', status: 'completed' },
+    ];
+
+    expect(store.scheduleBookings.map((item) => item.uuid)).toEqual(['pending-1', 'done-1']);
+  });
+
   it('uses at most two list requests when selected day is empty', async () => {
     const store = new BookingsStore();
     store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
@@ -243,5 +256,177 @@ describe('BookingsStore', () => {
     expect(confirmBookingByCode).toHaveBeenCalledWith('booking-1', '0421');
     expect(store.bookings[0].status).toBe('confirmed');
     expect(store.selectedBooking?.status).toBe('confirmed');
+  });
+
+  it('still shows an empty day when nearest-date discovery fails', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    (fetchBookingsListForDay as jest.Mock).mockResolvedValueOnce({
+      data: [{ ...mockListItem, uuid: 'cancelled-1', status: 'cancelled' }],
+      total: 1,
+      limit: 100,
+      offset: 0,
+    });
+    (fetchBookingsListFlexible as jest.Mock).mockRejectedValueOnce(new Error('network'));
+
+    await store.fetchBookings();
+
+    expect(store.error).toBeNull();
+    expect(store.scheduleBookings).toHaveLength(0);
+    expect(store.nearestBookingDate).toBeNull();
+  });
+
+  it('does not treat a cancelled-only day as loaded and discovers the nearest visit', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    (fetchBookingsListForDay as jest.Mock).mockResolvedValueOnce({
+      data: [{ ...mockListItem, uuid: 'cancelled-1', status: 'cancelled' }],
+      total: 1,
+      limit: 100,
+      offset: 0,
+    });
+    (fetchBookingsListFlexible as jest.Mock).mockResolvedValueOnce({
+      data: [
+        {
+          ...mockListItem,
+          uuid: 'cancelled-1',
+          status: 'cancelled',
+          start_time: '2026-06-29T10:30:00.000Z',
+        },
+        {
+          ...mockListItem,
+          uuid: 'near-booking',
+          start_time: '2026-07-02T12:00:00.000Z',
+        },
+      ],
+      total: 2,
+      limit: 200,
+      offset: 0,
+    });
+
+    await store.fetchBookings();
+
+    expect(fetchBookingsListForDay).toHaveBeenCalledTimes(1);
+    expect(fetchBookingsListFlexible).toHaveBeenCalledTimes(1);
+    expect(store.scheduleBookings).toHaveLength(0);
+    expect(store.nearestBookingDate?.getFullYear()).toBe(2026);
+    expect(store.nearestBookingDate?.getMonth()).toBe(6);
+    expect(store.nearestBookingDate?.getDate()).toBe(2);
+  });
+
+  it('keeps a successful empty day when a silent refresh fails', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    (fetchBookingsListForDay as jest.Mock)
+      .mockResolvedValueOnce({
+        data: [],
+        total: 0,
+        limit: 100,
+        offset: 0,
+      })
+      .mockRejectedValueOnce(new Error('network'));
+    (fetchBookingsListFlexible as jest.Mock).mockResolvedValueOnce({
+      data: [],
+      total: 0,
+      limit: 200,
+      offset: 0,
+    });
+
+    await store.fetchBookings();
+    expect(store.error).toBeNull();
+    expect(store.bookings).toHaveLength(0);
+
+    await store.fetchBookings({ silent: true });
+
+    expect(store.error).toBeNull();
+    expect(store.bookings).toHaveLength(0);
+    expect(store.isLoadingList).toBe(false);
+  });
+
+  it('does not clear an existing list error until a silent refresh succeeds', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    (fetchBookingsListForDay as jest.Mock).mockRejectedValueOnce(new Error('fail'));
+
+    await store.fetchBookings();
+    expect(store.error).toBe('fail');
+
+    let resolveDay: (value: typeof mockListResponse) => void = () => undefined;
+    (fetchBookingsListForDay as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<typeof mockListResponse>((resolve) => {
+          resolveDay = resolve;
+        }),
+    );
+
+    const pending = store.fetchBookings({ silent: true });
+
+    expect(store.error).toBe('fail');
+    expect(store.isLoadingList).toBe(false);
+
+    resolveDay(mockListResponse);
+    await pending;
+
+    expect(store.error).toBeNull();
+    expect(store.bookings).toHaveLength(1);
+  });
+
+  it('skips a silent refresh while another list request is in flight', async () => {
+    const store = new BookingsStore();
+    store.setSelectedDate(new Date('2026-06-29T12:00:00.000Z'));
+
+    let resolveDay: (value: typeof mockListResponse) => void = () => undefined;
+    (fetchBookingsListForDay as jest.Mock).mockImplementationOnce(
+      () =>
+        new Promise<typeof mockListResponse>((resolve) => {
+          resolveDay = resolve;
+        }),
+    );
+
+    const first = store.fetchBookings();
+    await store.fetchBookings({ silent: true });
+
+    expect(fetchBookingsListForDay).toHaveBeenCalledTimes(1);
+
+    resolveDay(mockListResponse);
+    await first;
+
+    expect(store.bookings).toHaveLength(1);
+  });
+
+  it('stores a confirmation lockout by booking uuid', async () => {
+    const error = new axios.AxiosError('locked');
+    error.response = {
+      status: 429,
+      data: {
+        error: {
+          code: 'CONFIRMATION_ATTEMPTS_EXCEEDED',
+          message: 'Превышен лимит попыток ввода кода',
+          details: [{ blocked: true }],
+        },
+      },
+      statusText: 'Too Many Requests',
+      headers: {},
+      config: { headers: {} },
+    } as AxiosError['response'];
+    (confirmBookingByCode as jest.Mock).mockRejectedValueOnce(error);
+
+    const store = new BookingsStore();
+    const result = await store.confirmBooking('booking-1', '0000');
+
+    expect(result).toEqual({
+      ok: false,
+      message: 'Превышен лимит попыток ввода кода',
+      blocked: true,
+      supportEmail: null,
+    });
+    expect(store.isConfirmationBlocked('booking-1')).toBe(true);
+    expect(store.getConfirmationLockout('booking-1')?.message).toBe(
+      'Превышен лимит попыток ввода кода',
+    );
   });
 });
