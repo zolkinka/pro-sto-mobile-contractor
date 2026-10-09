@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +19,7 @@ import { AppText } from '@/components/ui/app-text';
 import { EmptyStateView } from '@/components/ui/empty-state-view';
 import { ErrorStateView } from '@/components/ui/error-state-view';
 import { LoadingStateView } from '@/components/ui/loading-state-view';
+import { BOOKINGS_LIST_POLL_INTERVAL_MS } from '@/constants/bookings';
 import { UI_STATE_LABELS } from '@/constants/ui-states';
 import { theme } from '@/constants/theme';
 import type { MainStackParamList } from '@/navigation/types';
@@ -37,9 +38,52 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
   useFocusEffect(
     useCallback(() => {
       bookingsStore.setServiceCenterUuid(authStore.user?.serviceCenterUuid ?? null);
-      bookingsStore
-        .fetchBookings({ silent: bookingsStore.bookings.length > 0 })
-        .catch(() => undefined);
+
+      let pollId: ReturnType<typeof setInterval> | null = null;
+
+      const refreshBookings = (silent = bookingsStore.bookings.length > 0) => {
+        bookingsStore.fetchBookings({ silent }).catch(() => undefined);
+      };
+
+      const stopPolling = () => {
+        if (pollId == null) {
+          return;
+        }
+
+        clearInterval(pollId);
+        pollId = null;
+      };
+
+      const startPolling = () => {
+        if (pollId != null) {
+          return;
+        }
+
+        pollId = setInterval(() => {
+          refreshBookings(true);
+        }, BOOKINGS_LIST_POLL_INTERVAL_MS);
+      };
+
+      refreshBookings();
+
+      if (AppState.currentState === 'active') {
+        startPolling();
+      }
+
+      const appStateSubscription = AppState.addEventListener('change', (state) => {
+        if (state === 'active') {
+          startPolling();
+          refreshBookings(true);
+          return;
+        }
+
+        stopPolling();
+      });
+
+      return () => {
+        stopPolling();
+        appStateSubscription.remove();
+      };
     }, []),
   );
 
@@ -78,7 +122,11 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
   };
 
   const dateLabel = formatBookingDayLabel(bookingsStore.selectedDate);
-  const bookings = bookingsStore.sortedBookings;
+  const bookings = bookingsStore.scheduleBookings;
+  const listErrorMessage =
+    __DEV__ && bookingsStore.devErrorDetail
+      ? `${bookingsStore.error ?? UI_STATE_LABELS.loadBookingsError}\n\n— debug —\n${bookingsStore.devErrorDetail}`
+      : bookingsStore.error ?? UI_STATE_LABELS.loadBookingsError;
   const nearestDateLabel = bookingsStore.nearestBookingDate
     ? formatBookingDayLabel(bookingsStore.nearestBookingDate)
     : null;
@@ -105,7 +153,7 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
               <BookingsListSkeleton />
             </LoadingStateView>
           ) : bookingsStore.error && bookings.length === 0 ? (
-            <ErrorStateView message={bookingsStore.error} onRetry={handleRetry} />
+            <ErrorStateView message={listErrorMessage} onRetry={handleRetry} />
           ) : bookings.length === 0 ? (
             <EmptyStateView
               title={UI_STATE_LABELS.emptyBookingsTitle}

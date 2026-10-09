@@ -1,6 +1,8 @@
 import React, { type ReactNode } from 'react';
+import { AppState } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
+import { BOOKINGS_LIST_POLL_INTERVAL_MS } from '@/constants/bookings';
 import { BookingsListScreen } from '@/screens/bookings/BookingsListScreen';
 import { authStore } from '@/stores/auth.store';
 import { bookingsStore } from '@/stores/bookings.store';
@@ -8,6 +10,7 @@ import type { BookingsStore } from '@/stores/bookings.store';
 import type { BookingListItem } from '@/types/bookings';
 
 const mockNavigate = jest.fn();
+let focusEffectCleanup: (() => void) | void;
 
 type MockBookingsListStore = jest.Mocked<
   Pick<
@@ -26,6 +29,7 @@ type MockBookingsListStore = jest.Mocked<
   error: string | null;
   bookings: BookingListItem[];
   sortedBookings: BookingListItem[];
+  scheduleBookings: BookingListItem[];
 };
 
 const mockBookingsStore = bookingsStore as unknown as MockBookingsListStore;
@@ -42,7 +46,9 @@ jest.mock('react-native-safe-area-context', () => {
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
-  useFocusEffect: (callback: () => void) => callback(),
+  useFocusEffect: (callback: () => void | (() => void)) => {
+    focusEffectCleanup = callback();
+  },
 }));
 
 jest.mock('@/stores/auth.store', () => ({
@@ -60,6 +66,7 @@ jest.mock('@/stores/bookings.store', () => ({
     error: null,
     bookings: [],
     sortedBookings: [],
+    scheduleBookings: [],
     setServiceCenterUuid: jest.fn(),
     fetchBookings: jest.fn(async () => undefined),
     clearError: jest.fn(),
@@ -72,9 +79,18 @@ jest.mock('@/stores/bookings.store', () => ({
 describe('BookingsListScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: jest.fn() });
     mockBookingsStore.isLoadingList = false;
     mockBookingsStore.error = null;
     mockBookingsStore.sortedBookings = [];
+    mockBookingsStore.scheduleBookings = [];
+  });
+
+  afterEach(() => {
+    focusEffectCleanup?.();
+    focusEffectCleanup = undefined;
+    jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   it('loads bookings on focus without token re-validation', async () => {
@@ -88,7 +104,7 @@ describe('BookingsListScreen', () => {
   });
 
   it('renders booking cards sorted from store', async () => {
-    mockBookingsStore.sortedBookings = [
+    mockBookingsStore.scheduleBookings = [
       {
         uuid: 'booking-1',
         start_time: '2026-06-29T10:30:00.000Z',
@@ -135,5 +151,53 @@ describe('BookingsListScreen', () => {
     });
 
     expect(mockNavigate).toHaveBeenCalledWith('Profile');
+  });
+
+  it('stops polling in background and refreshes once when the app is active again', async () => {
+    jest.useFakeTimers();
+    let onAppStateChange: (state: string) => void = () => undefined;
+
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
+      onAppStateChange = handler as (state: string) => void;
+      return { remove: jest.fn() };
+    });
+    Object.defineProperty(AppState, 'currentState', {
+      configurable: true,
+      value: 'active',
+    });
+
+    await ReactTestRenderer.act(async () => {
+      ReactTestRenderer.create(<BookingsListScreen />);
+    });
+
+    expect(mockBookingsStore.fetchBookings).toHaveBeenCalledTimes(1);
+
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(BOOKINGS_LIST_POLL_INTERVAL_MS);
+    });
+
+    expect(mockBookingsStore.fetchBookings).toHaveBeenCalledTimes(2);
+    expect(mockBookingsStore.fetchBookings).toHaveBeenLastCalledWith({ silent: true });
+
+    await ReactTestRenderer.act(async () => {
+      onAppStateChange('inactive');
+    });
+    await ReactTestRenderer.act(async () => {
+      onAppStateChange('background');
+    });
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(BOOKINGS_LIST_POLL_INTERVAL_MS * 2);
+    });
+
+    expect(mockBookingsStore.fetchBookings).toHaveBeenCalledTimes(2);
+
+    await ReactTestRenderer.act(async () => {
+      onAppStateChange('active');
+    });
+
+    expect(mockBookingsStore.fetchBookings).toHaveBeenCalledTimes(3);
+    expect(mockBookingsStore.fetchBookings).toHaveBeenLastCalledWith({ silent: true });
+
+    jest.useRealTimers();
   });
 });

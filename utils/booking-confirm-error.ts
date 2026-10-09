@@ -2,10 +2,22 @@ import axios from 'axios';
 
 const QR_NOT_FOUND_MESSAGE = 'QR-код не найден, попробуйте снова';
 
+interface ConfirmationErrorDetail {
+  remaining_attempts?: number;
+  blocked?: boolean;
+  support_email?: string;
+}
+
 interface ConfirmationErrorBody {
   code?: string;
   message?: string;
-  details?: Array<{ remaining_attempts?: number }>;
+  details?: ConfirmationErrorDetail[];
+}
+
+export interface BookingConfirmFailure {
+  message: string;
+  blocked: boolean;
+  supportEmail?: string | null;
 }
 
 function readConfirmationError(error: unknown): ConfirmationErrorBody | null {
@@ -26,39 +38,55 @@ function readConfirmationError(error: unknown): ConfirmationErrorBody | null {
   return null;
 }
 
-export function getBookingConfirmErrorMessage(error: unknown): string {
+export function getBookingConfirmFailure(error: unknown): BookingConfirmFailure {
   if (!axios.isAxiosError(error)) {
-    return 'Не удалось подтвердить запись. Попробуйте ещё раз';
+    return {
+      message: 'Не удалось подтвердить запись. Попробуйте ещё раз',
+      blocked: false,
+    };
   }
 
   const status = error.response?.status;
   const body = readConfirmationError(error);
   const message = body?.message?.trim();
+  const detail = body?.details?.[0];
+  const blocked =
+    body?.code === 'CONFIRMATION_ATTEMPTS_EXCEEDED' || detail?.blocked === true;
 
-  if (body?.code === 'CONFIRMATION_ATTEMPTS_EXCEEDED' || status === 429) {
-    return message || 'Превышен лимит попыток ввода кода';
+  if (blocked) {
+    const base = message || 'Превышен лимит попыток ввода кода';
+    const email = detail?.support_email?.trim();
+
+    return { message: base, blocked: true, supportEmail: email || null };
   }
 
   if (body?.code === 'INVALID_CONFIRMATION_CODE' || status === 400) {
-    const remaining = body?.details?.[0]?.remaining_attempts;
+    const remaining = detail?.remaining_attempts;
     const base = message || 'Неверный код подтверждения';
 
     if (typeof remaining === 'number') {
-      return `${base}. Осталось попыток: ${remaining}`;
+      return { message: `${base}. Осталось попыток: ${remaining}`, blocked: false };
     }
 
-    return base;
+    return { message: base, blocked: false };
   }
 
   if (status === 404) {
-    return message || 'Бронирование не найдено';
+    return { message: message || 'Бронирование не найдено', blocked: false };
   }
 
   if (status === 403) {
-    return message || 'Нет доступа к этому бронированию';
+    return { message: message || 'Нет доступа к этому бронированию', blocked: false };
   }
 
-  return message || 'Не удалось подтвердить запись. Попробуйте ещё раз';
+  return {
+    message: message || 'Не удалось подтвердить запись. Попробуйте ещё раз',
+    blocked: false,
+  };
+}
+
+export function getBookingConfirmErrorMessage(error: unknown): string {
+  return getBookingConfirmFailure(error).message;
 }
 
 export function getQrScanErrorMessage(): string {

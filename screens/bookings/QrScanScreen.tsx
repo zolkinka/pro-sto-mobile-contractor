@@ -1,10 +1,12 @@
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
+import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Image, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BookingConfirmLockoutHint } from '@/components/bookings/booking-confirm-lockout-hint';
 import { FlashlightIcon } from '@/components/bookings/flashlight-icon';
 import { QrCameraPreview } from '@/components/bookings/qr-camera-preview';
 import { AppButton } from '@/components/ui/app-button';
@@ -38,10 +40,11 @@ function resetScanSession(
   setIsConfirming(false);
 }
 
-export function QrScanScreen() {
+export const QrScanScreen = observer(function QrScanScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<QrScanRoute>();
   const bookingUuid = route.params?.bookingUuid;
+  const storedLockout = bookingsStore.getConfirmationLockout(bookingUuid);
   const [cameraGranted, setCameraGranted] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,6 +52,8 @@ export function QrScanScreen() {
   const [cameraAvailable, setCameraAvailable] = useState(false);
   const confirmingRef = useRef(false);
   const blockedScanRef = useRef<string | null>(null);
+  const isBlocked = Boolean(storedLockout);
+  const displayError = errorMessage ?? storedLockout?.message ?? null;
 
   const requestCamera = useCallback(async () => {
     const granted = await permissionsStore.ensurePermission('camera');
@@ -73,7 +78,6 @@ export function QrScanScreen() {
   useFocusEffect(
     useCallback(() => {
       resetScanSession(confirmingRef, blockedScanRef, setIsConfirming);
-      setErrorMessage(null);
     }, []),
   );
 
@@ -100,7 +104,7 @@ export function QrScanScreen() {
       blockedScanRef.current = null;
     }
 
-    if (confirmingRef.current) {
+    if (confirmingRef.current || isBlocked) {
       return;
     }
 
@@ -113,6 +117,12 @@ export function QrScanScreen() {
 
     if (bookingUuid && payload.uuid !== bookingUuid) {
       setErrorMessage(WRONG_BOOKING_MESSAGE);
+      return;
+    }
+
+    if (bookingsStore.isConfirmationBlocked(payload.uuid)) {
+      const lockout = bookingsStore.getConfirmationLockout(payload.uuid);
+      setErrorMessage(lockout?.message ?? null);
       return;
     }
 
@@ -156,7 +166,7 @@ export function QrScanScreen() {
             styles.frame,
             !showCameraPreview && !showPermissionPrompt
               ? styles.frameIllustration
-              : { borderColor: errorMessage ? ERROR_COLOR : FRAME_COLOR },
+              : { borderColor: displayError ? ERROR_COLOR : FRAME_COLOR },
             showPermissionPrompt ? styles.framePermission : null,
           ]}>
           {showPermissionPrompt ? (
@@ -177,7 +187,7 @@ export function QrScanScreen() {
 
           {!showCameraPreview && !showPermissionPrompt ? (
             <Image
-              source={errorMessage ? scanFrameError : scanFrame}
+              source={displayError ? scanFrameError : scanFrame}
               style={styles.frameImage}
               resizeMode="cover"
             />
@@ -185,7 +195,7 @@ export function QrScanScreen() {
 
           {cameraGranted ? (
             <QrCameraPreview
-              active={!isConfirming}
+              active={!isConfirming && !isBlocked}
               torchOn={torchOn}
               onCameraAvailable={setCameraAvailable}
               onCodeScanned={(value) => {
@@ -205,23 +215,33 @@ export function QrScanScreen() {
           ) : null}
         </View>
 
-        {errorMessage ? (
-          <AppText weight="regular" style={styles.error}>
-            {errorMessage}
-          </AppText>
+        {displayError ? (
+          <View style={styles.errorBlock}>
+            <AppText weight="regular" style={styles.error}>
+              {displayError}
+            </AppText>
+            {isBlocked ? <BookingConfirmLockoutHint /> : null}
+          </View>
         ) : null}
       </View>
 
-      <AppButton
-        label="Подтвердить по 4-х значному коду заказа"
-        variant="secondary"
-        shrinkLabelToFit
-        onPress={() => navigation.navigate('BookingCode', { bookingUuid })}
-        style={styles.codeButton}
-      />
+      {isBlocked ? null : (
+        <AppButton
+          label="Подтвердить по 4-х значному коду заказа"
+          variant="secondary"
+          shrinkLabelToFit
+          onPress={() =>
+            navigation.replace('BookingCode', {
+              bookingUuid,
+              fromMenu: route.params?.fromMenu,
+            })
+          }
+          style={styles.codeButton}
+        />
+      )}
     </SafeAreaView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -314,6 +334,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#E7E5E4',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  errorBlock: {
+    gap: 12,
+    width: '100%',
+    alignItems: 'center',
   },
   error: {
     fontSize: 15,

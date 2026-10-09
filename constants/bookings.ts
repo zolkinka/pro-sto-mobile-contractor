@@ -22,6 +22,9 @@ export const ICON_DIRECTION_LEFT_COLOR = '#53514F';
 /** Figma CaretUp / CaretDown outline stroke color. */
 export const ICON_CARET_COLOR = '#302F2D';
 
+/** While the day list is open, poll for new/cancelled visits from the web calendar. */
+export const BOOKINGS_LIST_POLL_INTERVAL_MS = 15_000;
+
 /** Lower value = higher in list (pending first). */
 export const BOOKING_STATUS_SORT_ORDER: Record<BookingStatus, number> = {
   pending_confirmation: 0,
