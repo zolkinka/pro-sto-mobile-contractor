@@ -1,3 +1,5 @@
+allowBuilds:
+  '@sentry/cli': set this to true or false
 minimumReleaseAgeExclude:
   - '@react-navigation/core@7.21.10'
   - '@react-navigation/elements@2.9.35'

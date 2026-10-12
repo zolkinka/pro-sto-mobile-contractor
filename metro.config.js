@@ -1,6 +1,5 @@
 const path = require('path');
-const { getDefaultConfig } = require('expo/metro-config');
-const { withSentryConfig } = require('@sentry/react-native/metro');
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
 /**
  * Metro configuration
@@ -8,7 +7,7 @@ const { withSentryConfig } = require('@sentry/react-native/metro');
  *
  * @type {import('expo/metro-config').MetroConfig}
  */
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 const previousResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -26,4 +25,4 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = withSentryConfig(config);
+module.exports = config;

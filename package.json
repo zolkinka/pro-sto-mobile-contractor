@@ -11,7 +11,7 @@
     "booking:qr": "node scripts/create-booking-qr.js",
     "test": "jest",
     "link-assets": "npx react-native-asset",
-    "postinstall": "node scripts/patch-metro-keys.js && npm run link-assets"
+    "postinstall": "node scripts/patch-metro-keys.js && node scripts/patch-react-native-runtimescheduler.js && npm run link-assets"
   },
   "dependencies": {
     "@miblanchard/react-native-slider": "^2.6.0",
