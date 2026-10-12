@@ -1,7 +1,7 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -108,6 +108,37 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
     bookingsStore.fetchBookings().catch(() => undefined);
   };
 
+  const dateLabel = formatBookingDayLabel(bookingsStore.selectedDate);
+
+  const openDatePicker = useCallback(() => {
+    setDatePickerVisible(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: '',
+      headerShadowVisible: false,
+      headerBackVisible: false,
+      gestureEnabled: false,
+      headerStyle: { backgroundColor: theme.colors.gray[50] },
+      headerLeftContainerStyle: styles.headerSideInset,
+      headerRightContainerStyle: styles.headerSideInset,
+      headerLeft: () => (
+        <Pressable
+          onPress={openDatePicker}
+          style={({ pressed }) => [styles.datePill, pressed && styles.datePillPressed]}
+          accessibilityRole="button"
+          accessibilityLabel={`Выбранная дата: ${dateLabel}`}>
+          <AppText weight="semiBold" style={styles.dateText}>
+            {dateLabel}
+          </AppText>
+        </Pressable>
+      ),
+      headerRight: () => <ProStoLogo />,
+    });
+  }, [navigation, dateLabel, openDatePicker]);
+
   const handleBottomTabPress = (tab: MainBottomTab) => {
     if (tab === 'bookings') {
       return;
@@ -120,8 +151,6 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
 
     navigation.navigate('Profile');
   };
-
-  const dateLabel = formatBookingDayLabel(bookingsStore.selectedDate);
   const bookings = bookingsStore.scheduleBookings;
   const listErrorMessage =
     __DEV__ && bookingsStore.devErrorDetail
@@ -132,20 +161,7 @@ export const BookingsListScreen = observer(function BookingsListScreen() {
     : null;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => setDatePickerVisible(true)}
-          style={({ pressed }) => [styles.datePill, pressed && styles.datePillPressed]}
-          accessibilityRole="button"
-          accessibilityLabel={`Выбранная дата: ${dateLabel}`}>
-          <AppText weight="semiBold" style={styles.dateText}>
-            {dateLabel}
-          </AppText>
-        </Pressable>
-        <ProStoLogo />
-      </View>
-
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <View style={styles.body}>
         <View style={styles.content}>
           {bookingsStore.isLoadingList && bookings.length === 0 ? (
@@ -210,14 +226,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.gray[50],
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  headerSideInset: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
   },
   datePill: {
+    flexShrink: 1,
+    maxWidth: '100%',
     backgroundColor: theme.colors.gray[900],
     borderRadius: 999,
     paddingHorizontal: 16,

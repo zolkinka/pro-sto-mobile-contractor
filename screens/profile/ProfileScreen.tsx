@@ -13,6 +13,7 @@ import {
 import { AppText } from '@/components/ui/app-text';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { theme } from '@/constants/theme';
+import { resetToHome } from '@/navigation/reset-to-home';
 import type { MainStackParamList } from '@/navigation/types';
 import { fetchServiceCenterName } from '@/services/service-center-api';
 import { authStore } from '@/stores/auth.store';
@@ -75,7 +76,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
     }
 
     if (tab === 'bookings') {
-      navigation.navigate('Home');
+      resetToHome(navigation);
       return;
     }
 

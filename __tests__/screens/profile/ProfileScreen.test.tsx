@@ -6,6 +6,7 @@ import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { authStore } from '@/stores/auth.store';
 
 const mockNavigate = jest.fn();
+const mockDispatch = jest.fn();
 
 jest.mock('react-native-safe-area-context', () => {
   const { View } = require('react-native');
@@ -17,9 +18,19 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: mockNavigate }),
-}));
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual<typeof import('@react-navigation/native')>(
+    '@react-navigation/native',
+  );
+
+  return {
+    ...actual,
+    useNavigation: () => ({
+      navigate: mockNavigate,
+      dispatch: mockDispatch,
+    }),
+  };
+});
 
 jest.mock('@/services/service-center-api', () => ({
   fetchServiceCenterName: jest.fn(async () => 'Шинка'),
@@ -86,5 +97,25 @@ describe('ProfileScreen', () => {
 
     expect(authStore.logout).toHaveBeenCalled();
     alertSpy.mockRestore();
+  });
+
+  it('pops to Home when the Bookings tab is pressed', async () => {
+    const { StackActions } = jest.requireActual<typeof import('@react-navigation/native')>(
+      '@react-navigation/native',
+    );
+    let tree: ReactTestRenderer.ReactTestRenderer;
+
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(<ProfileScreen />);
+    });
+
+    const bookingsTab = tree!.root.findByProps({ accessibilityLabel: 'Записи' });
+
+    await ReactTestRenderer.act(async () => {
+      bookingsTab.props.onPress();
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith(StackActions.popTo('Home'));
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

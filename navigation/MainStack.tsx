@@ -23,7 +23,15 @@ function DevUiShowcaseScreen(props: object) {
 export function MainStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={BookingsListScreen} options={{ animation: 'none' }} />
+      <Stack.Screen
+        name="Home"
+        component={BookingsListScreen}
+        options={{
+          animation: 'none',
+          headerBackVisible: false,
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen name="Profile" component={ProfileScreen} options={{ animation: 'none' }} />
       <Stack.Screen
         name="Support"

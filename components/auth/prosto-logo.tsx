@@ -7,20 +7,27 @@ type ProStoLogoProps = {
   width?: number;
 };
 
-const LOGO_ASPECT_RATIO = 188 / 49;
+const LOGO_ASPECT_RATIO = 167 / 43;
 
-export function ProStoLogo({ width = 140 }: ProStoLogoProps) {
+export function ProStoLogo({ width = 120 }: ProStoLogoProps) {
   const height = width / LOGO_ASPECT_RATIO;
 
   return (
-    <View style={styles.container}>
-      <Image source={logoSource} style={{ width, height }} resizeMode="contain" />
+    <View style={styles.container} accessibilityLabel="просто">
+      <Image
+        source={logoSource}
+        style={{ width, height }}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flexShrink: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 });

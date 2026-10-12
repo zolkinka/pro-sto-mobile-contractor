@@ -45,7 +45,7 @@ jest.mock('react-native-safe-area-context', () => {
 });
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: mockNavigate }),
+  useNavigation: () => ({ navigate: mockNavigate, setOptions: jest.fn() }),
   useFocusEffect: (callback: () => void | (() => void)) => {
     focusEffectCleanup = callback();
   },
