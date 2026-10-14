@@ -12,6 +12,38 @@
     {
       "path": "assets/fonts/Onest-SemiBold.ttf",
       "sha1": "e37d9d95ce73c21bd85946417f3192d77d282307"
+    },
+    {
+      "path": "assets/images/flashlight.svg",
+      "sha1": "7172938e0297b5952ae4d5fecd61c560e5a8ea28"
+    },
+    {
+      "path": "assets/images/logo.svg",
+      "sha1": "0c0221f89e63b3507452c9ce506b9e9aad6bf8b9"
+    },
+    {
+      "path": "assets/images/permissions/camera.png",
+      "sha1": "f34b2d37e45ca3a57e2673e3b317e888669098bf"
+    },
+    {
+      "path": "assets/images/permissions/notifications.png",
+      "sha1": "ad975b2bfcc0c2b9eb9b1c852bab38264fb4278b"
+    },
+    {
+      "path": "assets/images/prosto-logo.png",
+      "sha1": "31c1870f35ed3c6d2c15896f810ab479789fe278"
+    },
+    {
+      "path": "assets/images/qr-scan-preview.png",
+      "sha1": "fd45c26443496f7834f2a03e5a1bd730fc60a41f"
+    },
+    {
+      "path": "assets/images/qr/scan-frame-error.png",
+      "sha1": "a18f4a86cd54df235a07786f623534cd67a483e5"
+    },
+    {
+      "path": "assets/images/qr/scan-frame.png",
+      "sha1": "fd45c26443496f7834f2a03e5a1bd730fc60a41f"
     }
   ]
 }

@@ -10,31 +10,47 @@
 		0C80B921A6F3F58F76C31292 /* libPods-ProStoMobileContractors.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-ProStoMobileContractors.a */; };
 		10413A0D558841A2990143F5 /* Onest-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8D8236EDB9DA4FFFAFAF2CEE /* Onest-SemiBold.ttf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1960AD4982C74B61B3923B75 /* flashlight.svg in Resources */ = {isa = PBXBuildFile; fileRef = 00C5F7DBC36548AF9540A816 /* flashlight.svg */; };
+		1FBCDED0745547B09E58382F /* scan-frame.png in Resources */ = {isa = PBXBuildFile; fileRef = 939DE077928646AB8E29D8C6 /* scan-frame.png */; };
 		25615906798E4B1FAE2086E4 /* Onest-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BBBEB356E6D649EAB23E5949 /* Onest-Regular.ttf */; };
 		313529C02373CF3CE02CC00A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		315FA142EA40481B83D67479 /* notifications.png in Resources */ = {isa = PBXBuildFile; fileRef = 4FE41C1B1A06479EBD759BB8 /* notifications.png */; };
 		4F03A903C293E6F53DB285F8 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0204EB4E8486FD77BB7B04E5 /* ExpoModulesProvider.swift */; };
+		53D6470E37DA4F79858887B6 /* prosto-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 069EE469AAEC42FBBDA83A25 /* prosto-logo.png */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9C4509FE74B945F6BA800EE4 /* logo.svg in Resources */ = {isa = PBXBuildFile; fileRef = B6E3E431F61B4582AD599F59 /* logo.svg */; };
+		A1520D6A26AF4DE999EFCBFF /* scan-frame-error.png in Resources */ = {isa = PBXBuildFile; fileRef = CEE72FEDD43043518BD952E3 /* scan-frame-error.png */; };
 		A1E5C0DE0000000000000002 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1E5C0DE0000000000000001 /* Expo.plist */; };
+		DF246CD9CF51427A8E61AD46 /* qr-scan-preview.png in Resources */ = {isa = PBXBuildFile; fileRef = 079C77A4E1FC41D5B672D67B /* qr-scan-preview.png */; };
 		E1063F344A594711A89796C6 /* Onest-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 393A9BE913F84B5E8F351E11 /* Onest-Medium.ttf */; };
+		E287B0C4D3BD400FB6C22747 /* camera.png in Resources */ = {isa = PBXBuildFile; fileRef = F1C06F33C74D42C1B4529DCF /* camera.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		00C5F7DBC36548AF9540A816 /* flashlight.svg */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = flashlight.svg; path = ../assets/images/flashlight.svg; sourceTree = "<group>"; };
 		0204EB4E8486FD77BB7B04E5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-ProStoMobileContractors/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		069EE469AAEC42FBBDA83A25 /* prosto-logo.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "prosto-logo.png"; path = "../assets/images/prosto-logo.png"; sourceTree = "<group>"; };
+		079C77A4E1FC41D5B672D67B /* qr-scan-preview.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "qr-scan-preview.png"; path = "../assets/images/qr-scan-preview.png"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* ProStoMobileContractors.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProStoMobileContractors.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ProStoMobileContractors/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ProStoMobileContractors/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = ProStoMobileContractors/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		393A9BE913F84B5E8F351E11 /* Onest-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Onest-Medium.ttf"; path = "../assets/fonts/Onest-Medium.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-ProStoMobileContractors.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProStoMobileContractors.debug.xcconfig"; path = "Target Support Files/Pods-ProStoMobileContractors/Pods-ProStoMobileContractors.debug.xcconfig"; sourceTree = "<group>"; };
+		4FE41C1B1A06479EBD759BB8 /* notifications.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = notifications.png; path = ../assets/images/permissions/notifications.png; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-ProStoMobileContractors.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ProStoMobileContractors.release.xcconfig"; path = "Target Support Files/Pods-ProStoMobileContractors/Pods-ProStoMobileContractors.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-ProStoMobileContractors.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ProStoMobileContractors.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ProStoMobileContractors/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ProStoMobileContractors/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8D8236EDB9DA4FFFAFAF2CEE /* Onest-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Onest-SemiBold.ttf"; path = "../assets/fonts/Onest-SemiBold.ttf"; sourceTree = "<group>"; };
+		939DE077928646AB8E29D8C6 /* scan-frame.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "scan-frame.png"; path = "../assets/images/qr/scan-frame.png"; sourceTree = "<group>"; };
 		A1E5C0DE0000000000000001 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Expo.plist; path = ProStoMobileContractors/Expo.plist; sourceTree = "<group>"; };
+		B6E3E431F61B4582AD599F59 /* logo.svg */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = logo.svg; path = ../assets/images/logo.svg; sourceTree = "<group>"; };
 		BBBEB356E6D649EAB23E5949 /* Onest-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Onest-Regular.ttf"; path = "../assets/fonts/Onest-Regular.ttf"; sourceTree = "<group>"; };
+		CEE72FEDD43043518BD952E3 /* scan-frame-error.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "scan-frame-error.png"; path = "../assets/images/qr/scan-frame-error.png"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F1C06F33C74D42C1B4529DCF /* camera.png */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = camera.png; path = ../assets/images/permissions/camera.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +140,14 @@
 				393A9BE913F84B5E8F351E11 /* Onest-Medium.ttf */,
 				8D8236EDB9DA4FFFAFAF2CEE /* Onest-SemiBold.ttf */,
 				BBBEB356E6D649EAB23E5949 /* Onest-Regular.ttf */,
+				00C5F7DBC36548AF9540A816 /* flashlight.svg */,
+				069EE469AAEC42FBBDA83A25 /* prosto-logo.png */,
+				939DE077928646AB8E29D8C6 /* scan-frame.png */,
+				CEE72FEDD43043518BD952E3 /* scan-frame-error.png */,
+				4FE41C1B1A06479EBD759BB8 /* notifications.png */,
+				F1C06F33C74D42C1B4529DCF /* camera.png */,
+				079C77A4E1FC41D5B672D67B /* qr-scan-preview.png */,
+				B6E3E431F61B4582AD599F59 /* logo.svg */,
 			);
 			name = Resources;
 			path = "";
@@ -208,6 +232,14 @@
 				E1063F344A594711A89796C6 /* Onest-Medium.ttf in Resources */,
 				10413A0D558841A2990143F5 /* Onest-SemiBold.ttf in Resources */,
 				25615906798E4B1FAE2086E4 /* Onest-Regular.ttf in Resources */,
+				1960AD4982C74B61B3923B75 /* flashlight.svg in Resources */,
+				53D6470E37DA4F79858887B6 /* prosto-logo.png in Resources */,
+				1FBCDED0745547B09E58382F /* scan-frame.png in Resources */,
+				A1520D6A26AF4DE999EFCBFF /* scan-frame-error.png in Resources */,
+				315FA142EA40481B83D67479 /* notifications.png in Resources */,
+				E287B0C4D3BD400FB6C22747 /* camera.png in Resources */,
+				DF246CD9CF51427A8E61AD46 /* qr-scan-preview.png in Resources */,
+				9C4509FE74B945F6BA800EE4 /* logo.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
